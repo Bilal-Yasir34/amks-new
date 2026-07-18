@@ -74,15 +74,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div>
-<<<<<<< HEAD
             {settings?.logo ? (
               <img src={settings.logo} alt={settings.store_name || "AMKS"} className="h-8 object-contain mb-4" />
             ) : (
               <h4 className="font-display text-2xl tracking-[0.3em] mb-4">{settings?.store_name || "AMKS"}</h4>
             )}
-=======
-            <h4 className="font-display text-2xl tracking-[0.3em] mb-4">AMKS</h4>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
             <p className="text-ink-400 text-sm leading-relaxed">
               {settings?.footer_text || 'Premium Shawls & Tweed Fabric. Crafted with luxury.'}
             </p>

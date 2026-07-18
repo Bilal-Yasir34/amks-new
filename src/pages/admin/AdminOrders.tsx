@@ -7,7 +7,6 @@ import { useAuth } from '../../context/AuthContext';
 import type { Order } from '../../types';
 import toast from 'react-hot-toast';
 
-<<<<<<< HEAD
 const ORDER_STATUSES = ['pending', 'confirmed', 'delivered', 'cancelled'];
 
 const STATUS_LABELS: Record<string, string> = {
@@ -16,9 +15,6 @@ const STATUS_LABELS: Record<string, string> = {
   delivered: 'Delivered',
   cancelled: 'Cancelled'
 };
-=======
-const ORDER_STATUSES = ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled', 'refunded'];
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -70,11 +66,7 @@ export default function AdminOrders() {
         </div>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 text-sm border border-ink-200 focus:border-ink-900 focus:outline-none bg-white">
           <option value="">All Statuses</option>
-<<<<<<< HEAD
           {ORDER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
-=======
-          {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
         </select>
       </div>
 
@@ -108,13 +100,8 @@ export default function AdminOrders() {
                     </span>
                   </td>
                   <td className="p-4">
-<<<<<<< HEAD
                     <span className={`text-xs px-2 py-1 ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : o.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
                       {STATUS_LABELS[o.status] || o.status}
-=======
-                    <span className={`text-xs px-2 py-1 ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : o.status === 'cancelled' || o.status === 'refunded' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {o.status}
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
                     </span>
                   </td>
                   <td className="p-4 hidden sm:table-cell text-ink-400">{new Date(o.created_at).toLocaleDateString()}</td>
@@ -206,11 +193,7 @@ export default function AdminOrders() {
                 <div>
                   <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Order Status</h3>
                   <select value={selected.status} onChange={(e) => { updateStatus(selected.id, e.target.value); setSelected({ ...selected, status: e.target.value }); }} className="input-field">
-<<<<<<< HEAD
                     {ORDER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
-=======
-                    {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
                   </select>
                 </div>
               </div>

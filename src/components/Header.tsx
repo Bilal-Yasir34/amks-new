@@ -4,28 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Search, Menu, X, User } from 'lucide-react';
 import { useCartStore } from '../store/cart';
 import { useAuth } from '../context/AuthContext';
-<<<<<<< HEAD
 import { supabase } from '../lib/supabase';
 import type { Settings, Product } from '../types';
 import { formatPrice } from '../lib/utils';
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-<<<<<<< HEAD
   const [liveResults, setLiveResults] = useState<Product[]>([]);
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const location = useLocation();
   const navigate = useNavigate();
   const totalItems = useCartStore((s) => s.totalItems());
   const toggleCart = useCartStore((s) => s.toggleCart);
   const { user } = useAuth();
-<<<<<<< HEAD
   const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
@@ -33,8 +26,6 @@ export default function Header() {
       if (data) setSettings(data as Settings);
     });
   }, []);
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -45,7 +36,6 @@ export default function Header() {
   useEffect(() => {
     setMobileOpen(false);
     setSearchOpen(false);
-<<<<<<< HEAD
     setLiveResults([]);
   }, [location.pathname]);
 
@@ -89,20 +79,13 @@ export default function Header() {
     return () => clearTimeout(delay);
   }, [searchQuery]);
 
-=======
-  }, [location.pathname]);
-
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
       setSearchQuery('');
-<<<<<<< HEAD
       setLiveResults([]);
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
     }
   };
 
@@ -137,7 +120,6 @@ export default function Header() {
             </button>
 
             {/* Logo */}
-<<<<<<< HEAD
             <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:order-first flex items-center">
               {settings?.logo ? (
                 <img src={settings.logo} alt={settings.store_name || "AMKS"} className="h-8 lg:h-10 object-contain" />
@@ -146,12 +128,6 @@ export default function Header() {
                   {settings?.store_name || "AMKS"}
                 </span>
               )}
-=======
-            <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:order-first">
-              <span className="font-display text-2xl lg:text-3xl tracking-[0.3em] font-medium text-ink-900">
-                AMKS
-              </span>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
             </Link>
 
             {/* Desktop nav */}
@@ -190,38 +166,6 @@ export default function Header() {
           </div>
         </div>
 
-<<<<<<< HEAD
-=======
-        {/* Search bar */}
-        <AnimatePresence>
-          {searchOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden border-t border-ink-100"
-            >
-              <form onSubmit={handleSearch} className="section-padding py-4">
-                <div className="flex items-center gap-3 max-w-3xl mx-auto">
-                  <Search className="w-5 h-5 text-ink-400" />
-                  <input
-                    autoFocus
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search for shawls, tweed, collections..."
-                    className="flex-1 bg-transparent border-none outline-none text-sm placeholder-ink-300"
-                  />
-                  <button type="submit" className="text-xs tracking-widest uppercase font-medium hover:text-ink-500">
-                    Search
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
       </motion.header>
 
       {/* Mobile menu */}
@@ -243,15 +187,11 @@ export default function Header() {
               className="fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 lg:hidden flex flex-col"
             >
               <div className="flex items-center justify-between p-6 border-b border-ink-100">
-<<<<<<< HEAD
                 {settings?.logo ? (
                   <img src={settings.logo} alt={settings.store_name || "AMKS"} className="h-8 object-contain" />
                 ) : (
                   <span className="font-display text-2xl tracking-[0.3em]">{settings?.store_name || "AMKS"}</span>
                 )}
-=======
-                <span className="font-display text-2xl tracking-[0.3em]">AMKS</span>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
                 <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
                   <X className="w-5 h-5" />
                 </button>
@@ -290,7 +230,6 @@ export default function Header() {
           </>
         )}
       </AnimatePresence>
-<<<<<<< HEAD
 
       {/* Search overlay modal */}
       <AnimatePresence>
@@ -383,8 +322,6 @@ export default function Header() {
           </motion.div>
         )}
       </AnimatePresence>
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
     </>
   );
 }

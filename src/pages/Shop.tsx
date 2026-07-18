@@ -1,9 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-<<<<<<< HEAD
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
-=======
-import { useSearchParams } from 'react-router-dom';
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -12,12 +8,9 @@ import ProductCard from '../components/ProductCard';
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
-<<<<<<< HEAD
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,16 +19,11 @@ export default function Shop() {
   const pageSize = 12;
 
   const query = searchParams.get('q') || '';
-<<<<<<< HEAD
   const categorySlug = slug || searchParams.get('category') || '';
-=======
-  const categorySlug = searchParams.get('category') || '';
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const sort = searchParams.get('sort') || 'newest';
   const maxPrice = searchParams.get('maxPrice') || '';
   const availability = searchParams.get('availability') || '';
 
-<<<<<<< HEAD
   const [sliderVal, setSliderVal] = useState(maxPrice || '50000');
 
   useEffect(() => {
@@ -51,8 +39,6 @@ export default function Shop() {
     return () => clearTimeout(delay);
   }, [sliderVal]);
 
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -70,7 +56,6 @@ export default function Shop() {
     let result = [...products];
 
     if (query) {
-<<<<<<< HEAD
       const q = query.toLowerCase().trim();
       const tokens = q.split(/\s+/).filter(Boolean);
       result = result.filter((p) => {
@@ -90,12 +75,6 @@ export default function Shop() {
           return matchTarget(name) || matchTarget(desc) || matchTarget(longDesc) || matchTarget(sku) || matchTarget(catName);
         });
       });
-=======
-      const q = query.toLowerCase();
-      result = result.filter(
-        (p) => p.name.toLowerCase().includes(q) || (p.short_description || '').toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q),
-      );
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
     }
     if (categorySlug) {
       result = result.filter((p) => p.category?.slug === categorySlug);
@@ -128,7 +107,6 @@ export default function Shop() {
   useEffect(() => { setPage(1); }, [query, categorySlug, sort, maxPrice, availability]);
 
   const updateParam = (key: string, value: string) => {
-<<<<<<< HEAD
     if (slug) {
       if (key === 'category') {
         if (value) {
@@ -144,18 +122,13 @@ export default function Shop() {
       return;
     }
 
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value); else next.delete(key);
     setSearchParams(next);
   };
 
-<<<<<<< HEAD
   const activeCategory = categories.find((c) => c.slug === categorySlug);
 
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const FilterPanel = () => (
     <div className="space-y-8">
       <div>
@@ -185,19 +158,11 @@ export default function Shop() {
           min="0"
           max="50000"
           step="1000"
-<<<<<<< HEAD
           value={sliderVal}
           onChange={(e) => setSliderVal(e.target.value)}
           className="w-full accent-ink-900 cursor-pointer"
         />
         <p className="text-xs text-ink-400 mt-2">Max: Rs. {Number(sliderVal).toLocaleString()}</p>
-=======
-          value={maxPrice || '50000'}
-          onChange={(e) => updateParam('maxPrice', e.target.value === '50000' ? '' : e.target.value)}
-          className="w-full accent-ink-900"
-        />
-        <p className="text-xs text-ink-400 mt-2">Max: Rs. {Number(maxPrice || '50000').toLocaleString()}</p>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
       </div>
       <div>
         <h4 className="text-xs tracking-widest uppercase font-medium mb-4">Availability</h4>
@@ -223,7 +188,6 @@ export default function Shop() {
   return (
     <div>
       {/* Page header */}
-<<<<<<< HEAD
       {activeCategory && activeCategory.banner_image ? (
         <div className="relative h-[40vh] min-h-[300px] overflow-hidden">
           <img src={activeCategory.banner_image} alt={activeCategory.name} className="w-full h-full object-cover animate-fade-in" />
@@ -244,14 +208,6 @@ export default function Shop() {
           <p className="text-sm text-ink-400 mt-3">{filtered.length} {filtered.length === 1 ? 'product' : 'products'}</p>
         </div>
       )}
-=======
-      <div className="section-padding py-16 text-center bg-stone-light">
-        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="font-display text-4xl md:text-5xl font-light">
-          {query ? `Results for "${query}"` : categorySlug ? categories.find((c) => c.slug === categorySlug)?.name || 'Shop' : 'Shop All'}
-        </motion.h1>
-        <p className="text-sm text-ink-400 mt-3">{filtered.length} {filtered.length === 1 ? 'product' : 'products'}</p>
-      </div>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
       <div className="section-padding py-12">
         {/* Mobile filter toggle */}

@@ -11,7 +11,6 @@ export default function Layout() {
   const [announcement, setAnnouncement] = useState('Free Shipping on all orders Nationwide');
 
   useEffect(() => {
-<<<<<<< HEAD
     supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
       if (data) {
         if (data.announcement_text) setAnnouncement(data.announcement_text);
@@ -25,10 +24,6 @@ export default function Layout() {
           link.href = data.favicon;
         }
       }
-=======
-    supabase.from('settings').select('announcement_text').eq('id', 1).maybeSingle().then(({ data }) => {
-      if (data?.announcement_text) setAnnouncement(data.announcement_text);
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
     });
   }, []);
 

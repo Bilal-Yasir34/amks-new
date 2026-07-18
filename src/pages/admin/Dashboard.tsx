@@ -5,7 +5,6 @@ import { Package, ShoppingCart, DollarSign, FolderTree, AlertTriangle, Ticket, C
 import { supabase } from '../../lib/supabase';
 import { formatPrice } from '../../lib/utils';
 
-<<<<<<< HEAD
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pending Confirmation',
   confirmed: 'In Progress',
@@ -13,8 +12,6 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled'
 };
 
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 interface DashboardData {
   totalProducts: number;
   totalCategories: number;
@@ -176,11 +173,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="font-medium">{formatPrice(order.total)}</p>
-<<<<<<< HEAD
                     <p className="text-xs text-ink-400">{STATUS_LABELS[order.status] || order.status}</p>
-=======
-                    <p className="text-xs text-ink-400 capitalize">{order.status}</p>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
                   </div>
                 </div>
               ))

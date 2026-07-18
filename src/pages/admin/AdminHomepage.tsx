@@ -274,7 +274,6 @@ function BannerForm({ banner, onClose, onSaved }: { banner: HeroBanner | null; o
   const [saving, setSaving] = useState(false);
 
   const handleUpload = async (file: File) => {
-<<<<<<< HEAD
     try {
       const fileName = `banner-${Date.now()}-${file.name}`;
       const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(fileName, file);
@@ -288,21 +287,11 @@ function BannerForm({ banner, onClose, onSaved }: { banner: HeroBanner | null; o
       console.error('Upload handler error:', err);
       toast.error(err.message || 'Upload failed.');
     }
-=======
-    const fileName = `banner-${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(fileName, file);
-    if (error) { toast.error('Upload failed.'); return; }
-    const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(fileName);
-    await supabase.from('media_assets').insert({ url: data.publicUrl, file_name: file.name, file_path: fileName, content_type: file.type, file_size: file.size });
-    setForm({ ...form, image_url: data.publicUrl });
-    toast.success('Image uploaded.');
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-<<<<<<< HEAD
     try {
       const payload = { ...form, sort_order: parseInt(form.sort_order) || 0 };
       console.log('Saving hero banner payload:', payload);
@@ -324,18 +313,6 @@ function BannerForm({ banner, onClose, onSaved }: { banner: HeroBanner | null; o
       toast.error(err.message || 'Failed to save.');
       setSaving(false);
     }
-=======
-    const payload = { ...form, sort_order: parseInt(form.sort_order) || 0 };
-    if (banner) {
-      const { error } = await supabase.from('hero_banners').update(payload).eq('id', banner.id);
-      if (error) toast.error('Failed to update.'); else toast.success('Banner updated.');
-    } else {
-      const { error } = await supabase.from('hero_banners').insert(payload);
-      if (error) toast.error('Failed to create.'); else toast.success('Banner created.');
-    }
-    setSaving(false);
-    onSaved();
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   };
 
   return (

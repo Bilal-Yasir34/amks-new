@@ -8,10 +8,7 @@ import { useRecentlyViewed } from '../store/recentlyViewed';
 import { formatPrice, getEffectivePrice, getDiscountPercent } from '../lib/utils';
 import type { Product, ProductVariantGroup, ProductVariantCombination, ProductVariantImage, ProductImage } from '../types';
 import ProductCard from '../components/ProductCard';
-<<<<<<< HEAD
 import Loader from '../components/Loader';
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 import toast from 'react-hot-toast';
 
 export default function ProductDetails() {
@@ -58,7 +55,6 @@ export default function ProductDetails() {
       setCombinations((comboRes.data || []) as ProductVariantCombination[]);
       setVariantImages((pviRes.data || []) as ProductVariantImage[]);
 
-<<<<<<< HEAD
       let relProducts: Product[] = [];
       if (p.category_id) {
         const { data: relData } = await supabase.from('products').select('*, category:categories(*)').eq('category_id', p.category_id).eq('status', 'active').neq('id', p.id).limit(4);
@@ -79,13 +75,6 @@ export default function ProductDetails() {
       }
       setRelated(relProducts);
 
-=======
-      if (p.category_id) {
-        const { data: relData } = await supabase.from('products').select('*, category:categories(*)').eq('category_id', p.category_id).eq('status', 'active').neq('id', p.id).limit(4);
-        setRelated((relData || []) as Product[]);
-      }
-
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
       if (recentlyViewedIds.length > 1) {
         const otherIds = recentlyViewedIds.filter((id) => id !== p.id);
         const { data: rvData } = await supabase.from('products').select('*, category:categories(*)').in('id', otherIds).eq('status', 'active').limit(4);
@@ -191,11 +180,7 @@ export default function ProductDetails() {
   };
 
   if (loading) {
-<<<<<<< HEAD
     return <Loader text="Loading product details" />;
-=======
-    return <div className="py-20 text-center text-ink-400 text-sm">Loading product...</div>;
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   }
   if (!product) {
     return (
@@ -328,14 +313,10 @@ export default function ProductDetails() {
             {product.long_description && (
               <div className="mb-6 pt-6 border-t border-ink-100">
                 <h4 className="text-xs tracking-widest uppercase font-medium mb-3">Description</h4>
-<<<<<<< HEAD
                 <div 
                   className="text-sm text-ink-500 leading-relaxed whitespace-pre-line prose max-w-none"
                   dangerouslySetInnerHTML={{ __html: product.long_description }}
                 />
-=======
-                <p className="text-sm text-ink-500 leading-relaxed whitespace-pre-line">{product.long_description}</p>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
               </div>
             )}
 

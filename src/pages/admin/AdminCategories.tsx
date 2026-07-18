@@ -118,10 +118,7 @@ export default function AdminCategories() {
 }
 
 function CategoryForm({ category, onClose, onSaved }: { category: Category | null; onClose: () => void; onSaved: () => void }) {
-<<<<<<< HEAD
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(!!category);
-=======
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const [form, setForm] = useState({
     name: category?.name || '',
     slug: category?.slug || '',
@@ -171,13 +168,8 @@ function CategoryForm({ category, onClose, onSaved }: { category: Category | nul
           <button onClick={onClose}><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-<<<<<<< HEAD
           <div><label className="text-xs text-ink-400 block mb-1">Name *</label><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: isSlugManuallyEdited ? form.slug : slugify(e.target.value) })} className="input-field" /></div>
           <div><label className="text-xs text-ink-400 block mb-1">Slug</label><input value={form.slug} onChange={(e) => { setIsSlugManuallyEdited(true); setForm({ ...form, slug: e.target.value }); }} className="input-field" /></div>
-=======
-          <div><label className="text-xs text-ink-400 block mb-1">Name *</label><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: form.slug || slugify(e.target.value) })} className="input-field" /></div>
-          <div><label className="text-xs text-ink-400 block mb-1">Slug</label><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="input-field" /></div>
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
           <div><label className="text-xs text-ink-400 block mb-1">Description</label><textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="input-field resize-none" /></div>
           <div>
             <label className="text-xs text-ink-400 block mb-2">Thumbnail</label>

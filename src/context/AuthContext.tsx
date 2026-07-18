@@ -31,11 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Admin check: user email matches admin email in settings, or user has admin flag in metadata
-<<<<<<< HEAD
   const isAdmin = !!user && (user.user_metadata?.is_admin === true || user.email === 'admin@amks.pk');
-=======
-  const isAdmin = !!user && (user.user_metadata?.is_admin === true || user.email === 'amks.pk@hotmail.com');
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
   return <AuthContext.Provider value={{ user, loading, isAdmin }}>{children}</AuthContext.Provider>;
 }
