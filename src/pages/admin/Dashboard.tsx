@@ -8,6 +8,7 @@ import { formatPrice } from '../../lib/utils';
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pending Confirmation',
   confirmed: 'In Progress',
+  shipped: 'Shipped',
   delivered: 'Delivered',
   cancelled: 'Cancelled'
 };
@@ -50,25 +51,29 @@ export default function Dashboard() {
         supabase.from('categories').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*', { count: 'exact', head: true }),
         supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('orders').select('total, created_at'),
+        supabase.from('orders').select('total, created_at, status'),
         supabase.from('coupons').select('*', { count: 'exact', head: true }),
         supabase.from('products').select('id, name, sku, stock_quantity, low_stock_threshold, featured_image').eq('archived', false).limit(5),
         supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
         supabase.from('products').select('id, name, featured_image, regular_price, sale_price, created_at').eq('archived', false).order('created_at', { ascending: false }).limit(5),
-        supabase.from('orders').select('total, created_at').order('created_at', { ascending: false }).limit(30),
+        supabase.from('orders').select('total, created_at, status').order('created_at', { ascending: false }).limit(30),
       ]);
 
-      const revenue = (orders || []).reduce((sum, o) => sum + (o as any).total, 0);
+      const revenue = (orders || [])
+        .filter((o: any) => o.status === 'shipped' || o.status === 'delivered')
+        .reduce((sum, o) => sum + (o as any).total, 0);
 
       // Low stock: filter by threshold
       const lowStock = (lowStockData || []).filter((p: any) => p.stock_quantity <= p.low_stock_threshold);
 
       // Sales by day (last 7 days)
       const salesMap = new Map<string, number>();
-      (recentSalesData || []).forEach((o: any) => {
-        const day = new Date(o.created_at).toISOString().slice(0, 10);
-        salesMap.set(day, (salesMap.get(day) || 0) + o.total);
-      });
+      (recentSalesData || [])
+        .filter((o: any) => o.status === 'shipped' || o.status === 'delivered')
+        .forEach((o: any) => {
+          const day = new Date(o.created_at).toISOString().slice(0, 10);
+          salesMap.set(day, (salesMap.get(day) || 0) + o.total);
+        });
       const salesByDay: { date: string; total: number }[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date();

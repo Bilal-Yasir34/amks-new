@@ -6,12 +6,14 @@ import { formatPrice } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import type { Order } from '../../types';
 import toast from 'react-hot-toast';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
 
-const ORDER_STATUSES = ['pending', 'confirmed', 'delivered', 'cancelled'];
+const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pending Confirmation',
   confirmed: 'In Progress',
+  shipped: 'Shipped',
   delivered: 'Delivered',
   cancelled: 'Cancelled'
 };
@@ -22,6 +24,7 @@ export default function AdminOrders() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selected, setSelected] = useState<Order | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => { loadOrders(); }, []);
@@ -45,6 +48,17 @@ export default function AdminOrders() {
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from('orders').update({ status }).eq('id', id);
     if (error) toast.error('Failed to update.'); else { toast.success('Order status updated.'); loadOrders(); }
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+    const { error } = await supabase.from('orders').delete().eq('id', id);
+    if (error) {
+      toast.error('Failed to delete order.');
+    } else {
+      toast.success('Order deleted.');
+      setSelected(null);
+      loadOrders();
+    }
   };
 
   const updatePaymentStatus = async (order: Order, paymentStatus: string, notes?: string) => {
@@ -100,7 +114,7 @@ export default function AdminOrders() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={`text-xs px-2 py-1 ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : o.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                    <span className={`text-xs px-2 py-1 ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : o.status === 'shipped' ? 'bg-indigo-100 text-indigo-700' : o.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
                       {STATUS_LABELS[o.status] || o.status}
                     </span>
                   </td>
@@ -196,11 +210,36 @@ export default function AdminOrders() {
                     {ORDER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
                   </select>
                 </div>
+
+                {/* Danger Zone */}
+                <div className="pt-6 border-t border-red-100">
+                  <button
+                    onClick={() => setDeleteId(selected.id)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors font-medium"
+                  >
+                    Delete Order
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Delete Order"
+        message="This will permanently delete the order and all its items. This action cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => {
+          if (deleteId) {
+            handleDeleteOrder(deleteId);
+            setDeleteId(null);
+          }
+        }}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

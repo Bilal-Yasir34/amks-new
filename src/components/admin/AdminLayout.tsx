@@ -47,7 +47,7 @@ export default function AdminLayout() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       const isUserAdmin = data.user && (
-        data.user.user_metadata?.is_admin === true || 
+        data.user.user_metadata?.is_admin === true ||
         data.user.email === 'admin@amks.pk'
       );
       if (!isUserAdmin) {
@@ -65,10 +65,10 @@ export default function AdminLayout() {
   if (!user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-light p-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.6 }} 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
           className="w-full max-w-md bg-white p-8 lg:p-10 shadow-sm border border-ink-100"
         >
           <div className="text-center mb-8">
@@ -83,22 +83,22 @@ export default function AdminLayout() {
           <form onSubmit={handleAdminLogin} className="space-y-6">
             <div>
               <label className="text-xs tracking-widest uppercase font-medium block mb-2">Admin Email</label>
-              <input 
-                type="email" 
-                required 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                className="input-field" 
-                placeholder="admin@amks.pk"
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field"
+                placeholder="Email"
               />
             </div>
             <div>
               <label className="text-xs tracking-widest uppercase font-medium block mb-2">Password</label>
-              <input 
-                type="password" 
-                required 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="input-field"
                 placeholder="••••••••"
               />
@@ -170,15 +170,15 @@ export default function AdminLayout() {
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-ink-900 text-white z-50 shadow-sm">
         <div className="flex items-center justify-between p-4">
-          <button 
+          <button
             type="button"
-            onClick={() => setMobileMenuOpen(true)} 
+            onClick={() => setMobileMenuOpen(true)}
             className="p-1 -ml-1 text-ink-300 hover:text-white"
             aria-label="Open Menu"
           >
             <Menu className="w-6 h-6" />
           </button>
-          
+
           <div className="flex-1 flex justify-center">
             {settings?.logo ? (
               <img src={settings.logo} alt={settings.store_name || "AMKS"} className="h-6 object-contain" />
@@ -234,8 +234,7 @@ export default function AdminLayout() {
                     to={link.to}
                     end={link.end}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-4 py-3 rounded text-sm transition-colors ${
-                        isActive ? 'bg-white/10 text-white' : 'text-ink-400 hover:text-white hover:bg-white/5'
+                      `flex items-center gap-3 px-4 py-3 rounded text-sm transition-colors ${isActive ? 'bg-white/10 text-white' : 'text-ink-400 hover:text-white hover:bg-white/5'
                       }`
                     }
                   >
