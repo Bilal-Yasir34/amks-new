@@ -7,9 +7,11 @@ import toast from 'react-hot-toast';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 
 export default function AdminHomepage() {
-  const [tab, setTab] = useState<'banners' | 'sections'>('banners');
+  const [tab, setTab] = useState<'banners' | 'sections' | 'instagram'>('banners');
   const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [sections, setSections] = useState<HomepageSection[]>([]);
+  const [settings, setSettings] = useState<any>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null);
   const [showBannerForm, setShowBannerForm] = useState(false);
@@ -17,14 +19,60 @@ export default function AdminHomepage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: b }, { data: s }] = await Promise.all([
+    const [{ data: b }, { data: s }, { data: setts }] = await Promise.all([
       supabase.from('hero_banners').select('*').order('sort_order'),
       supabase.from('homepage_sections').select('*').order('sort_order'),
+      supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
     ]);
     setBanners((b || []) as HeroBanner[]);
     setSections((s || []) as HomepageSection[]);
+    setSettings(setts);
     setLoading(false);
   }, []);
+
+  const handleInstagramUpload = async (file: File, num: number) => {
+    try {
+      const fileName = `instagram-${num}-${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(fileName, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(fileName);
+      
+      const mediaRes = await supabase.from('media_assets').insert({ 
+        url: data.publicUrl, 
+        file_name: file.name, 
+        file_path: fileName, 
+        content_type: file.type, 
+        file_size: file.size 
+      });
+      if (mediaRes.error) console.error('Media asset logging failed:', mediaRes.error);
+      
+      const updatedSocial = { ...(settings.social_links || {}) };
+      updatedSocial[`instagram_image_${num}`] = data.publicUrl;
+      setSettings((prev: any) => ({ ...prev, social_links: updatedSocial }));
+      toast.success(`Image ${num} uploaded.`);
+    } catch (err: any) {
+      console.error('Instagram upload error:', err);
+      toast.error(err.message || 'Upload failed.');
+    }
+  };
+
+  const handleSaveInstagram = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      const { error } = await supabase.from('settings').update({
+        social_links: settings.social_links,
+      }).eq('id', 1);
+      if (error) throw error;
+      toast.success('Instagram gallery saved.');
+      load();
+    } catch (err: any) {
+      console.error('Save Instagram error:', err);
+      toast.error(err.message || 'Failed to save.');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -72,6 +120,7 @@ export default function AdminHomepage() {
       <div className="flex gap-6 border-b border-ink-100 mb-8">
         <button onClick={() => setTab('banners')} className={`pb-4 text-sm transition-colors ${tab === 'banners' ? 'text-ink-900 border-b-2 border-ink-900 -mb-px' : 'text-ink-400 hover:text-ink-900'}`}>Hero Banners</button>
         <button onClick={() => setTab('sections')} className={`pb-4 text-sm transition-colors ${tab === 'sections' ? 'text-ink-900 border-b-2 border-ink-900 -mb-px' : 'text-ink-400 hover:text-ink-900'}`}>Homepage Sections</button>
+        <button onClick={() => setTab('instagram')} className={`pb-4 text-sm transition-colors ${tab === 'instagram' ? 'text-ink-900 border-b-2 border-ink-900 -mb-px' : 'text-ink-400 hover:text-ink-900'}`}>Instagram Gallery</button>
       </div>
 
       {loading ? <p className="text-sm text-ink-400">Loading...</p> : (
@@ -139,6 +188,64 @@ export default function AdminHomepage() {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {tab === 'instagram' && settings && (
+            <form onSubmit={handleSaveInstagram} className="bg-white border border-ink-100 p-6 space-y-6 max-w-4xl">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((num) => {
+                  const imgUrl = settings.social_links?.[`instagram_image_${num}`] || '';
+                  return (
+                    <div key={num} className="border border-ink-100 p-4 rounded bg-[#fafaf9] flex flex-col justify-between h-72 shadow-sm">
+                      <div>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-ink-600">Instagram Image {num}</span>
+                      </div>
+                      <div className="my-3 flex items-center justify-center border border-dashed border-ink-200 h-36 bg-white overflow-hidden rounded">
+                        {imgUrl ? (
+                          <img src={imgUrl} alt={`Instagram ${num}`} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs text-ink-300">No Image Uploaded</span>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleInstagramUpload(file, num);
+                          }}
+                          className="text-xs block w-full text-ink-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border file:border-ink-200 file:text-xs file:bg-white hover:file:bg-stone-light file:cursor-pointer cursor-pointer"
+                        />
+                        {imgUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedSocial = { ...settings.social_links };
+                              delete updatedSocial[`instagram_image_${num}`];
+                              setSettings((prev: any) => ({ ...prev, social_links: updatedSocial }));
+                            }}
+                            className="text-[10px] text-red-500 hover:underline block"
+                          >
+                            Remove Image
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4 border-t border-ink-100 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={savingSettings}
+                  className="btn-primary !px-8"
+                >
+                  {savingSettings ? 'Saving...' : 'Save Gallery'}
+                </button>
+              </div>
+            </form>
           )}
         </>
       )}

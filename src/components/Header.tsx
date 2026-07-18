@@ -257,21 +257,34 @@ export default function Header() {
                 </button>
               </div>
               <nav className="flex flex-col p-6 gap-1">
-                {navLinks.map((link) => (
-                  <Link
+                {navLinks.map((link, idx) => (
+                  <motion.div
                     key={link.to}
-                    to={link.to}
-                    className="text-sm tracking-widest uppercase font-medium py-3 border-b border-ink-50 hover:text-ink-500 transition-colors"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    {link.label}
-                  </Link>
+                    <Link
+                      to={link.to}
+                      className="text-sm tracking-widest uppercase font-medium py-3.5 border-b border-ink-50 block hover:text-ink-500 transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
                 ))}
-                <Link
-                  to={user ? '/account' : '/login'}
-                  className="text-sm tracking-widest uppercase font-medium py-3 hover:text-ink-500 transition-colors"
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: navLinks.length * 0.05, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  {user ? 'My Account' : 'Sign In'}
-                </Link>
+                  <Link
+                    to={user ? '/account' : '/login'}
+                    className="text-sm tracking-widest uppercase font-medium py-3.5 flex items-center gap-2 hover:text-ink-500 transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    {user ? 'My Account' : 'Sign In / Register'}
+                  </Link>
+                </motion.div>
               </nav>
             </motion.div>
           </>

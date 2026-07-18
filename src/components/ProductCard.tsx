@@ -65,11 +65,22 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
           )}
           <motion.button
             onClick={handleQuickAdd}
-            className="absolute bottom-0 left-0 right-0 bg-ink-900 text-white py-3 text-xs tracking-widest uppercase flex items-center justify-center gap-2 opacity-0 translate-y-full group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-luxury"
+            className="absolute bottom-0 left-0 right-0 bg-ink-900 text-white py-3 text-xs tracking-widest uppercase flex items-center justify-center gap-2 opacity-0 translate-y-full group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-luxury hidden lg:flex"
           >
             <ShoppingBag className="w-4 h-4" />
             {product.has_variants ? 'View Options' : 'Quick Add'}
           </motion.button>
+
+          {/* Mobile Quick Add */}
+          {product.stock_quantity > 0 && (
+            <button
+              onClick={handleQuickAdd}
+              className="absolute bottom-3 right-3 bg-ink-900 text-white w-9 h-9 flex items-center justify-center rounded-full shadow-md active:scale-90 transition-transform duration-200 lg:hidden z-10"
+              aria-label={product.has_variants ? 'View Options' : 'Quick Add'}
+            >
+              <ShoppingBag className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="text-center">
           {product.category && (
