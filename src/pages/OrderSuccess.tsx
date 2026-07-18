@@ -5,7 +5,10 @@ import { CheckCircle, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatPrice } from '../lib/utils';
 import type { Order } from '../types';
+<<<<<<< HEAD
 import Loader from '../components/Loader';
+=======
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
 export default function OrderSuccess() {
   const { orderNumber } = useParams<{ orderNumber: string }>();
@@ -20,7 +23,11 @@ export default function OrderSuccess() {
     });
   }, [orderNumber]);
 
+<<<<<<< HEAD
   if (loading) return <Loader text="Verifying order" />;
+=======
+  if (loading) return <div className="py-20 text-center text-ink-400 text-sm">Loading...</div>;
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
   return (
     <div className="section-padding py-20">

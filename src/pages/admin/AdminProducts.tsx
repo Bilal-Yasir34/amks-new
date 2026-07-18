@@ -3,7 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Copy, X, Search, Archive, RotateCcw, Layers, ChevronDown, ChevronUp, GripVertical, Trash } from 'lucide-react';
 import { supabase, MEDIA_BUCKET } from '../../lib/supabase';
 import { slugify, formatPrice } from '../../lib/utils';
+<<<<<<< HEAD
 import type { Product, Category, ProductImage, ProductVariantGroup, ProductVariantCombination, ProductVariantImage } from '../../types';
+=======
+import type { Product, Category, ProductImage, ProductVariantGroup, ProductVariantCombination } from '../../types';
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import Pagination from '../../components/admin/Pagination';
@@ -42,7 +46,11 @@ export default function AdminProducts() {
   };
 
   const handleDuplicate = async (p: Product) => {
+<<<<<<< HEAD
     const { id, created_at, updated_at, category, ...rest } = p as any;
+=======
+    const { id, created_at, updated_at, ...rest } = p;
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
     const { error } = await supabase.from('products').insert({ ...rest, name: `${p.name} (Copy)`, slug: `${p.slug}-copy-${Date.now().toString(36)}` });
     if (error) toast.error('Failed to duplicate.');
     else { toast.success('Product duplicated.'); loadProducts(); }
@@ -173,7 +181,10 @@ export default function AdminProducts() {
 
 // ============ PRODUCT FORM with Gallery + Variants ============
 function ProductForm({ product, categories, onClose, onSaved }: { product: Product | null; categories: Category[]; onClose: () => void; onSaved: () => void }) {
+<<<<<<< HEAD
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(!!product);
+=======
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const [form, setForm] = useState({
     name: product?.name || '',
     slug: product?.slug || '',
@@ -201,6 +212,7 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
     seo_description: product?.seo_description || '',
     meta_keywords: product?.meta_keywords || '',
   });
+<<<<<<< HEAD
 
   const insertFormat = (tagOpen: string, tagClose: string) => {
     const textarea = document.getElementById('long_description_textarea') as HTMLTextAreaElement;
@@ -230,6 +242,11 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
   const [combinations, setCombinations] = useState<ProductVariantCombination[]>([]);
   const [variantImages, setVariantImages] = useState<ProductVariantImage[]>([]);
   const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
+=======
+  const [gallery, setGallery] = useState<ProductImage[]>([]);
+  const [variantGroups, setVariantGroups] = useState<ProductVariantGroup[]>([]);
+  const [combinations, setCombinations] = useState<ProductVariantCombination[]>([]);
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [section, setSection] = useState<'basic' | 'images' | 'variants' | 'seo'>('basic');
@@ -237,16 +254,26 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
   useEffect(() => {
     if (!product) return;
     (async () => {
+<<<<<<< HEAD
       const [{ data: imgs }, { data: vgs }, { data: combos }, { data: vimgs }] = await Promise.all([
         supabase.from('product_images').select('*').eq('product_id', product.id).order('sort_order'),
         supabase.from('product_variant_groups').select('*, product_variant_values(*)').eq('product_id', product.id).order('sort_order'),
         supabase.from('product_variant_combinations').select('*').eq('product_id', product.id),
         supabase.from('product_variant_images').select('*').eq('product_id', product.id).order('sort_order'),
+=======
+      const [{ data: imgs }, { data: vgs }, { data: combos }] = await Promise.all([
+        supabase.from('product_images').select('*').eq('product_id', product.id).order('sort_order'),
+        supabase.from('product_variant_groups').select('*, product_variant_values(*)').eq('product_id', product.id).order('sort_order'),
+        supabase.from('product_variant_combinations').select('*').eq('product_id', product.id),
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
       ]);
       setGallery((imgs || []) as ProductImage[]);
       setVariantGroups((vgs || []) as ProductVariantGroup[]);
       setCombinations((combos || []) as ProductVariantCombination[]);
+<<<<<<< HEAD
       setVariantImages((vimgs || []) as ProductVariantImage[]);
+=======
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
     })();
   }, [product]);
 
@@ -295,7 +322,86 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
     toast.success('Image removed.');
   };
 
+<<<<<<< HEAD
   // Variant management is now handled self-contained inside VariantsModal
+=======
+  // Variant management
+  const addVariantGroup = async () => {
+    if (!product) { toast.error('Save the product first.'); return; }
+    const name = prompt('Variant group name (e.g. Size, Design, Color):');
+    if (!name) return;
+    const { data } = await supabase.from('product_variant_groups').insert({ product_id: product.id, name, sort_order: variantGroups.length }).select('*, product_variant_values(*)').single();
+    if (data) { setVariantGroups([...variantGroups, data as ProductVariantGroup]); toast.success('Variant group added.'); }
+  };
+
+  const deleteVariantGroup = async (groupId: string) => {
+    if (!confirm('Delete this variant group and all its values?')) return;
+    await supabase.from('product_variant_groups').delete().eq('id', groupId);
+    setVariantGroups(variantGroups.filter((g) => g.id !== groupId));
+    toast.success('Variant group deleted.');
+  };
+
+  const addVariantValue = async (groupId: string) => {
+    const value = prompt('Value (e.g. 2 Meter, Royal Check):');
+    if (!value) return;
+    const group = variantGroups.find((g) => g.id === groupId);
+    const sortOrder = group?.product_variant_values?.length || 0;
+    const { data } = await supabase.from('product_variant_values').insert({ group_id: groupId, value, sort_order: sortOrder }).select().single();
+    if (data) {
+      setVariantGroups(variantGroups.map((g) => g.id === groupId ? { ...g, product_variant_values: [...(g.product_variant_values || []), data as any] } : g));
+      toast.success('Value added.');
+    }
+  };
+
+  const deleteVariantValue = async (groupId: string, valueId: string) => {
+    await supabase.from('product_variant_values').delete().eq('id', valueId);
+    setVariantGroups(variantGroups.map((g) => g.id === groupId ? { ...g, product_variant_values: (g.product_variant_values || []).filter((v) => v.id !== valueId) } : g));
+    toast.success('Value removed.');
+  };
+
+  const generateCombinations = async () => {
+    if (!product) return;
+    const groups = variantGroups.filter((g) => (g.product_variant_values || []).length > 0);
+    if (groups.length === 0) { toast.error('Add at least one group with values.'); return; }
+    if (!confirm('This will regenerate all combinations. Existing custom prices/stock will be replaced. Continue?')) return;
+
+    // Delete old combos
+    await supabase.from('product_variant_combinations').delete().eq('product_id', product.id);
+
+    // Generate all combinations
+    const valueLists = groups.map((g) => (g.product_variant_values || []).map((v) => v.value));
+    const combos: string[][] = valueLists.reduce((acc, curr) => acc.flatMap((a) => curr.map((c) => [...a, c])), [[]] as string[][]);
+
+    const rows = combos.map((combo) => ({
+      product_id: product.id,
+      combination_key: combo.join('|'),
+      regular_price: parseFloat(form.regular_price) || 0,
+      sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
+      stock_quantity: 0,
+      sku: '',
+      status: 'active',
+    }));
+
+    const { data } = await supabase.from('product_variant_combinations').insert(rows).select('*');
+    if (data) { setCombinations(data as ProductVariantCombination[]); toast.success(`${data.length} combinations generated.`); }
+  };
+
+  const updateCombination = async (id: string, field: string, value: string | number | null) => {
+    const val = field === 'sale_price' && value === '' ? null : value;
+    setCombinations(combinations.map((c) => c.id === id ? { ...c, [field]: val } as any : c));
+  };
+
+  const saveCombination = async (c: ProductVariantCombination) => {
+    await supabase.from('product_variant_combinations').update({
+      regular_price: c.regular_price,
+      sale_price: c.sale_price,
+      stock_quantity: c.stock_quantity,
+      sku: c.sku,
+      status: c.status,
+    }).eq('id', c.id);
+    toast.success('Combination saved.');
+  };
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -356,8 +462,13 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
           {section === 'basic' && (
             <>
               <div className="grid grid-cols-2 gap-4">
+<<<<<<< HEAD
                 <div><label className="text-xs text-ink-400 block mb-1">Name *</label><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: isSlugManuallyEdited ? form.slug : slugify(e.target.value) })} className="input-field" /></div>
                 <div><label className="text-xs text-ink-400 block mb-1">Slug</label><input value={form.slug} onChange={(e) => { setIsSlugManuallyEdited(true); setForm({ ...form, slug: e.target.value }); }} className="input-field" /></div>
+=======
+                <div><label className="text-xs text-ink-400 block mb-1">Name *</label><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: form.slug || slugify(e.target.value) })} className="input-field" /></div>
+                <div><label className="text-xs text-ink-400 block mb-1">Slug</label><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="input-field" /></div>
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -371,6 +482,7 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
                 <div><label className="text-xs text-ink-400 block mb-1">Product Type</label><input value={form.product_type} onChange={(e) => setForm({ ...form, product_type: e.target.value })} className="input-field" /></div>
               </div>
               <div><label className="text-xs text-ink-400 block mb-1">Short Description</label><input value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="input-field" /></div>
+<<<<<<< HEAD
               <div>
                 <label className="text-xs text-ink-400 block mb-1">Long Description</label>
                 <div className="border border-ink-200 bg-white">
@@ -426,6 +538,9 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
                   />
                 </div>
               </div>
+=======
+              <div><label className="text-xs text-ink-400 block mb-1">Long Description</label><textarea rows={4} value={form.long_description} onChange={(e) => setForm({ ...form, long_description: e.target.value })} className="input-field resize-none" /></div>
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 
               <div className="border-t border-ink-100 pt-4">
                 <h3 className="text-xs tracking-widest uppercase font-medium mb-4 text-ink-400">Pricing</h3>
@@ -525,6 +640,7 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
 
               {form.has_variants ? (
                 <>
+<<<<<<< HEAD
                   {!product ? (
                     <p className="text-xs text-amber-600 bg-amber-50 p-3">Save the product first to manage variants.</p>
                   ) : (
@@ -545,6 +661,62 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
                         </button>
                       </div>
                     </div>
+=======
+                  {!product && <p className="text-xs text-amber-600 bg-amber-50 p-3">Save the product first to manage variants.</p>}
+
+                  {product && (
+                    <>
+                      {/* Variant Groups */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs tracking-widest uppercase font-medium text-ink-400">Variant Groups</h3>
+                          <button type="button" onClick={addVariantGroup} className="text-xs flex items-center gap-1 text-ink-500 hover:text-ink-900"><Plus className="w-3 h-3" /> Add Group</button>
+                        </div>
+                        {variantGroups.map((group) => (
+                          <div key={group.id} className="border border-ink-100 p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-sm font-medium">{group.name}</span>
+                              <button type="button" onClick={() => deleteVariantGroup(group.id)} className="text-xs text-red-500">Delete</button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {(group.product_variant_values || []).map((val) => (
+                                <span key={val.id} className="flex items-center gap-1 px-2 py-1 bg-stone-light text-xs">
+                                  {val.value}
+                                  <button type="button" onClick={() => deleteVariantValue(group.id, val.id)} className="text-ink-300 hover:text-red-500"><X className="w-3 h-3" /></button>
+                                </span>
+                              ))}
+                            </div>
+                            <button type="button" onClick={() => addVariantValue(group.id)} className="text-xs text-ink-500 hover:text-ink-900 flex items-center gap-1"><Plus className="w-3 h-3" /> Add Value</button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Combinations */}
+                      {variantGroups.some((g) => (g.product_variant_values || []).length > 0) && (
+                        <div className="border-t border-ink-100 pt-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xs tracking-widest uppercase font-medium text-ink-400 flex items-center gap-2"><Layers className="w-3 h-3" /> Combinations</h3>
+                            <button type="button" onClick={generateCombinations} className="text-xs btn-outline !py-1.5 !px-3">Generate All</button>
+                          </div>
+                          {combinations.length > 0 ? (
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                              {combinations.map((c) => (
+                                <div key={c.id} className="grid grid-cols-6 gap-2 items-center p-2 border border-ink-100 text-xs">
+                                  <span className="col-span-2 truncate font-medium" title={c.combination_key}>{c.combination_key}</span>
+                                  <input type="number" placeholder="Reg Price" value={c.regular_price} onChange={(e) => updateCombination(c.id, 'regular_price', parseFloat(e.target.value) || 0)} className="w-full px-1 py-1 border border-ink-200" />
+                                  <input type="number" placeholder="Sale" value={c.sale_price ?? ''} onChange={(e) => updateCombination(c.id, 'sale_price', e.target.value)} className="w-full px-1 py-1 border border-ink-200" />
+                                  <input type="number" placeholder="Stock" value={c.stock_quantity} onChange={(e) => updateCombination(c.id, 'stock_quantity', parseInt(e.target.value) || 0)} className="w-full px-1 py-1 border border-ink-200" />
+                                  <button type="button" onClick={() => saveCombination(c)} className="px-2 py-1 bg-ink-900 text-white text-[10px]">Save</button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-ink-400">Click "Generate All" to create combinations from variant groups.</p>
+                          )}
+                        </div>
+                      )}
+                    </>
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
                   )}
                 </>
               ) : (
@@ -567,6 +739,7 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
           </div>
         </form>
       </motion.div>
+<<<<<<< HEAD
 
       {isVariantsModalOpen && product && (
         <VariantsModal
@@ -925,3 +1098,8 @@ function VariantsModal({
     </div>
   );
 }
+=======
+    </>
+  );
+}
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36

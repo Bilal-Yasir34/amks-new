@@ -34,7 +34,10 @@
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+<<<<<<< HEAD
   height: 0px;
+=======
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 }
 ::-webkit-scrollbar-track {
   background: #f5f5f4;
@@ -47,6 +50,7 @@
   background: #0a0a0a;
 }
 
+<<<<<<< HEAD
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
@@ -55,6 +59,8 @@
   scrollbar-width: none;
 }
 
+=======
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;

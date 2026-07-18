@@ -25,9 +25,12 @@ export default function Auth({ mode }: { mode: 'login' | 'register' }) {
         toast.success('Account created! You are now signed in.');
         navigate('/account');
       } else {
+<<<<<<< HEAD
         if (email.trim().toLowerCase() === 'admin@amks.pk') {
           throw new Error('Administrators must log in via the Admin Portal at /admin.');
         }
+=======
+>>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success('Welcome back!');
