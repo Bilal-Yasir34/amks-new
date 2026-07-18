@@ -6,11 +6,7 @@ export default function About() {
     <div>
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[350px] overflow-hidden">
-<<<<<<< HEAD
         <img src="images/about3.png" alt="AMKS Heritage" className="w-full h-full object-cover" />
-=======
-        <img src="https://images.pexels.com/photos/631162/pexels-photo-631162.jpeg?auto=compress&cs=tinysrgb&w=1920" alt="AMKS Heritage" className="w-full h-full object-cover" />
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
         <div className="absolute inset-0 bg-ink-900/50" />
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center text-white px-4">
@@ -62,11 +58,7 @@ export default function About() {
       <section className="section-padding py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-<<<<<<< HEAD
             <img src="images/about2.png" alt="Craftsmanship" className="w-full aspect-[4/3] object-cover" />
-=======
-            <img src="https://images.pexels.com/photos/4467687/pexels-photo-4467687.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Craftsmanship" className="w-full aspect-[4/3] object-cover" />
->>>>>>> 258ebc843639e3c6d0e37f218826486742c6eb36
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
             <p className="text-xs tracking-[0.3em] uppercase text-ink-400 mb-3">Craftsmanship</p>
