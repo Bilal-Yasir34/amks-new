@@ -54,19 +54,34 @@ export default function Checkout() {
 
     setSubmitting(true);
     try {
+      const orderId = crypto.randomUUID();
       const orderNumber = generateOrderNumber();
       let screenshotUrl: string | null = null;
 
+      // Upload payment screenshot if provided
       if (screenshotFile) {
-        const fileName = `${orderNumber}-${Date.now()}.${screenshotFile.name.split('.').pop()}`;
-        const { error: uploadError } = await supabase.storage.from(PAYMENT_BUCKET).upload(fileName, screenshotFile);
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage.from(PAYMENT_BUCKET).getPublicUrl(fileName);
-          screenshotUrl = urlData.publicUrl;
+        try {
+          const fileExt = screenshotFile.name.split('.').pop() || 'png';
+          const fileName = `${orderNumber}-${Date.now()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage.from(PAYMENT_BUCKET).upload(fileName, screenshotFile, {
+            cacheControl: '3600',
+            upsert: true,
+          });
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage.from(PAYMENT_BUCKET).getPublicUrl(fileName);
+            screenshotUrl = urlData.publicUrl;
+          } else {
+            console.warn('Payment screenshot upload notice:', uploadError);
+          }
+        } catch (uploadErr) {
+          console.warn('Error uploading screenshot file:', uploadErr);
         }
       }
 
-      const { data: order, error: orderError } = await supabase.from('orders').insert({
+      // 1. Insert order using explicit orderId (works for both guests & logged-in users)
+      const { error: orderError } = await supabase.from('orders').insert({
+        id: orderId,
         order_number: orderNumber,
         user_id: user?.id || null,
         customer_name: form.name,
@@ -74,65 +89,79 @@ export default function Checkout() {
         customer_phone: form.phone,
         shipping_address: form.address,
         city: form.city,
-        postal_code: form.postalCode,
-        order_notes: form.notes,
+        postal_code: form.postalCode || null,
+        order_notes: form.notes || null,
         subtotal: sub,
         discount,
         shipping,
         total,
-        coupon_code: couponCode,
+        coupon_code: couponCode || null,
         payment_method: paymentMethod,
-        payment_status: paymentMethod === 'cod' ? 'pending_verification' : 'pending_verification',
+        payment_status: 'pending_verification',
         transaction_id: paymentMethod === 'bank_transfer' ? transactionId : null,
         payment_screenshot: screenshotUrl,
         status: 'pending',
-      }).select().single();
+      });
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Order insertion error:', orderError);
+        throw new Error(orderError.message || 'Could not save order.');
+      }
 
-      // Insert order items
+      // 2. Insert order items
       const orderItems = items.map((item) => ({
-        order_id: order.id,
+        order_id: orderId,
         product_id: item.product_id,
         product_name: item.name,
-        variant_combination_id: item.variant_combination_id,
-        variant_description: item.variant_description,
-        sku: item.sku,
+        variant_combination_id: item.variant_combination_id || null,
+        variant_description: item.variant_description || null,
+        sku: item.sku || null,
         price: item.price,
         quantity: item.quantity,
-        image_url: item.image_url,
+        image_url: item.image_url || null,
       }));
-      await supabase.from('order_items').insert(orderItems);
 
-      // Record coupon usage
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) {
+        console.error('Order items insertion notice:', itemsError);
+      }
+
+      // 3. Record coupon usage (safely)
       if (couponCode) {
-        const { data: coupon } = await supabase.from('coupons').select('id').eq('code', couponCode).maybeSingle();
-        if (coupon) {
-          await supabase.from('coupon_usage').insert({ coupon_id: coupon.id, order_id: order.id, user_id: user?.id || null });
+        try {
+          const { data: coupon } = await supabase.from('coupons').select('id').eq('code', couponCode).maybeSingle();
+          if (coupon) {
+            await supabase.from('coupon_usage').insert({ coupon_id: coupon.id, order_id: orderId, user_id: user?.id || null });
+          }
+        } catch (couponErr) {
+          console.warn('Coupon usage tracking notice:', couponErr);
         }
       }
 
-      // Deduct stock
-      for (const item of items) {
-        if (item.variant_combination_id) {
-          await supabase.rpc('deduct_variant_stock', { combo_id: item.variant_combination_id, qty: item.quantity }).then(() => {});
-          // Fallback: direct update
-          const { data: combo } = await supabase.from('product_variant_combinations').select('stock_quantity').eq('id', item.variant_combination_id).maybeSingle();
-          if (combo) {
-            await supabase.from('product_variant_combinations').update({ stock_quantity: Math.max(0, (combo as any).stock_quantity - item.quantity) }).eq('id', item.variant_combination_id);
-          }
-        } else {
-          const { data: prod } = await supabase.from('products').select('stock_quantity').eq('id', item.product_id).maybeSingle();
-          if (prod) {
-            await supabase.from('products').update({ stock_quantity: Math.max(0, (prod as any).stock_quantity - item.quantity) }).eq('id', item.product_id);
+      // 4. Stock deduction (safely wrapped so permission policies don't abort successful checkout)
+      try {
+        for (const item of items) {
+          if (item.variant_combination_id) {
+            const { data: combo } = await supabase.from('product_variant_combinations').select('stock_quantity').eq('id', item.variant_combination_id).maybeSingle();
+            if (combo) {
+              await supabase.from('product_variant_combinations').update({ stock_quantity: Math.max(0, (combo as any).stock_quantity - item.quantity) }).eq('id', item.variant_combination_id);
+            }
+          } else {
+            const { data: prod } = await supabase.from('products').select('stock_quantity').eq('id', item.product_id).maybeSingle();
+            if (prod) {
+              await supabase.from('products').update({ stock_quantity: Math.max(0, (prod as any).stock_quantity - item.quantity) }).eq('id', item.product_id);
+            }
           }
         }
+      } catch (stockErr) {
+        console.warn('Stock update notice:', stockErr);
       }
 
       clearCart();
       navigate(`/order-success/${orderNumber}`);
-    } catch (err) {
-      toast.error('Failed to place order. Please try again.');
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      toast.error(err?.message || 'Failed to place order. Please check your details and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -150,19 +179,19 @@ export default function Checkout() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className="text-xs text-ink-400 block mb-2">Full Name *</label>
-                <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-field" />
+                <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-field" placeholder="John Doe" />
               </div>
               <div>
                 <label className="text-xs text-ink-400 block mb-2">Email *</label>
-                <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input-field" />
+                <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input-field" placeholder="name@example.com" />
               </div>
               <div>
                 <label className="text-xs text-ink-400 block mb-2">Phone *</label>
-                <input type="tel" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input-field" />
+                <input type="tel" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input-field" placeholder="+92 300 0000000" />
               </div>
               <div>
                 <label className="text-xs text-ink-400 block mb-2">City *</label>
-                <input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="input-field" />
+                <input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="input-field" placeholder="Lahore" />
               </div>
             </div>
           </div>
@@ -173,15 +202,15 @@ export default function Checkout() {
             <div className="space-y-5">
               <div>
                 <label className="text-xs text-ink-400 block mb-2">Address *</label>
-                <textarea required rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="input-field resize-none" />
+                <textarea required rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="input-field resize-none" placeholder="House #, Street name, Area" />
               </div>
               <div>
                 <label className="text-xs text-ink-400 block mb-2">Postal Code</label>
-                <input value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} className="input-field" />
+                <input value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} className="input-field" placeholder="54000" />
               </div>
               <div>
                 <label className="text-xs text-ink-400 block mb-2">Order Notes (optional)</label>
-                <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="input-field resize-none" />
+                <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="input-field resize-none" placeholder="Special instructions for delivery..." />
               </div>
             </div>
           </div>
@@ -202,25 +231,32 @@ export default function Checkout() {
                 <input type="radio" name="payment" value="bank_transfer" checked={paymentMethod === 'bank_transfer'} onChange={() => setPaymentMethod('bank_transfer')} className="mt-1 accent-ink-900" />
                 <div>
                   <span className="text-sm font-medium">Bank Transfer</span>
-                  <p className="text-xs text-ink-400 mt-1">Transfer to our bank account and upload your receipt.</p>
+                  <p className="text-xs text-ink-400 mt-1">Transfer to our bank account and upload your payment screenshot/receipt.</p>
                 </div>
               </label>
 
               {paymentMethod === 'bank_transfer' && settings && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="bg-stone-light p-5 space-y-3 text-sm">
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="bg-stone-light p-5 space-y-3 text-sm rounded border border-ink-100">
                   {settings.payment_instructions && <p className="text-ink-500 text-xs italic mb-3">{settings.payment_instructions}</p>}
                   {settings.bank_name && (<div className="flex justify-between"><span className="text-ink-400">Bank Name</span><span className="font-medium">{settings.bank_name}</span></div>)}
                   {settings.bank_account_title && (<div className="flex justify-between"><span className="text-ink-400">Account Title</span><span className="font-medium">{settings.bank_account_title}</span></div>)}
                   {settings.bank_account_number && (<div className="flex justify-between"><span className="text-ink-400">Account Number</span><span className="font-medium">{settings.bank_account_number}</span></div>)}
                   {settings.bank_iban && (<div className="flex justify-between"><span className="text-ink-400">IBAN</span><span className="font-medium">{settings.bank_iban}</span></div>)}
                   {settings.bank_branch_code && (<div className="flex justify-between"><span className="text-ink-400">Branch Code</span><span className="font-medium">{settings.bank_branch_code}</span></div>)}
+                  
                   <div className="pt-4 border-t border-ink-200">
                     <label className="text-xs tracking-widest uppercase font-medium block mb-2">Transaction ID / Reference Number *</label>
-                    <input required value={transactionId} onChange={(e) => setTransactionId(e.target.value)} className="input-field" placeholder="Enter your transaction reference" />
+                    <input required value={transactionId} onChange={(e) => setTransactionId(e.target.value)} className="input-field" placeholder="Enter your transaction reference (e.g., TRX-987654)" />
                   </div>
+                  
                   <div className="pt-2">
-                    <label className="text-xs tracking-widest uppercase font-medium block mb-2">Payment Screenshot (optional)</label>
+                    <label className="text-xs tracking-widest uppercase font-medium block mb-2">Payment Screenshot / Receipt (optional)</label>
                     <input type="file" accept="image/*" onChange={handleFileChange} className="text-xs text-ink-500 file:mr-3 file:py-2 file:px-4 file:border-0 file:bg-ink-900 file:text-white file:text-xs file:cursor-pointer" />
+                    {screenshotFile && (
+                      <p className="text-xs text-emerald-600 mt-1 font-medium flex items-center gap-1">
+                        ✓ Selected: {screenshotFile.name}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -230,7 +266,7 @@ export default function Checkout() {
 
         {/* Right: order summary */}
         <div>
-          <div className="bg-stone-light p-6 lg:p-8 sticky top-24">
+          <div className="bg-stone-light p-6 lg:p-8 sticky top-24 rounded border border-ink-100">
             <h2 className="text-xs tracking-widest uppercase font-medium mb-5">Order Summary</h2>
             <div className="space-y-4 mb-6">
               {items.map((item) => (

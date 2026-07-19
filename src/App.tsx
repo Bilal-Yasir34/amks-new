@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
 import ScrollToTop from './components/ScrollToTop';
 import Layout from './components/Layout';
 import AdminLayout from './components/admin/AdminLayout';
@@ -40,11 +41,12 @@ function PageLoader() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <Toaster position="bottom-right" toastOptions={{ style: { background: '#0a0a0a', color: '#fff', fontSize: '13px', borderRadius: '0' } }} />
-          <Suspense fallback={<PageLoader />}>
+      <SettingsProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <Toaster position="bottom-right" toastOptions={{ style: { background: '#0a0a0a', color: '#fff', fontSize: '13px', borderRadius: '0' } }} />
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />
@@ -76,6 +78,7 @@ export default function App() {
           </Suspense>
         </BrowserRouter>
       </AuthProvider>
-    </QueryClientProvider>
-  );
+    </SettingsProvider>
+  </QueryClientProvider>
+);
 }

@@ -121,6 +121,7 @@ export default function Footer() {
               <li><Link to="/shop" className="text-sm text-ink-400 hover:text-white transition-colors">Shop All</Link></li>
               <li><Link to="/about" className="text-sm text-ink-400 hover:text-white transition-colors">About Us</Link></li>
               <li><Link to="/contact" className="text-sm text-ink-400 hover:text-white transition-colors">Contact</Link></li>
+              <li><a href="https://fastex.pk/trackingDetail?trackingNo=" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-400 hover:text-white transition-colors">Track Order</a></li>
               <li><Link to="/admin" className="text-sm text-ink-400 hover:text-white transition-colors">Admin</Link></li>
             </ul>
           </div>

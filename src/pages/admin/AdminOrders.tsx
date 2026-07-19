@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Check, XCircle } from 'lucide-react';
+import { X, Search, Check, XCircle, ExternalLink, Image as ImageIcon, ZoomIn } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatPrice } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -25,6 +25,7 @@ export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState('');
   const [selected, setSelected] = useState<Order | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [screenshotModalUrl, setScreenshotModalUrl] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => { loadOrders(); }, []);
@@ -105,16 +106,25 @@ export default function AdminOrders() {
             ) : (
               filtered.map((o) => (
                 <tr key={o.id} className="border-t border-ink-50 hover:bg-stone-light/50 cursor-pointer" onClick={() => setSelected(o)}>
-                  <td className="p-4 font-medium">{o.order_number}</td>
+                  <td className="p-4 font-medium">
+                    <div className="flex items-center gap-2">
+                      {o.order_number}
+                      {o.payment_screenshot && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200" title="Payment screenshot attached">
+                          <ImageIcon className="w-3 h-3" /> Receipt
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-4 hidden md:table-cell text-ink-500">{o.customer_name}</td>
                   <td className="p-4">{formatPrice(o.total)}</td>
                   <td className="p-4 hidden lg:table-cell">
-                    <span className={`text-xs px-2 py-1 ${o.payment_status === 'verified' ? 'bg-green-100 text-green-700' : o.payment_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`text-xs px-2 py-1 rounded ${o.payment_status === 'verified' ? 'bg-green-100 text-green-700' : o.payment_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                       {o.payment_status.replace(/_/g, ' ')}
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={`text-xs px-2 py-1 ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : o.status === 'shipped' ? 'bg-indigo-100 text-indigo-700' : o.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                    <span className={`text-xs px-2 py-1 rounded ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : o.status === 'shipped' ? 'bg-indigo-100 text-indigo-700' : o.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
                       {STATUS_LABELS[o.status] || o.status}
                     </span>
                   </td>
@@ -132,90 +142,155 @@ export default function AdminOrders() {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelected(null)} className="fixed inset-0 bg-ink-900/50 z-[80]" />
             <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="fixed right-0 top-0 bottom-0 w-full max-w-xl bg-white z-[90] overflow-y-auto">
-              <div className="sticky top-0 bg-white flex items-center justify-between p-6 border-b border-ink-100">
-                <h2 className="font-display text-2xl font-light">{selected.order_number}</h2>
-                <button onClick={() => setSelected(null)}><X className="w-5 h-5" /></button>
+              <div className="sticky top-0 bg-white flex items-center justify-between p-6 border-b border-ink-100 z-10">
+                <div>
+                  <h2 className="font-display text-2xl font-light">{selected.order_number}</h2>
+                  <p className="text-xs text-ink-400">Placed on {new Date(selected.created_at).toLocaleString()}</p>
+                </div>
+                <button onClick={() => setSelected(null)} className="p-1 hover:bg-stone-light"><X className="w-5 h-5" /></button>
               </div>
+
               <div className="p-6 space-y-6">
                 {/* Customer */}
-                <div>
-                  <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Customer</h3>
-                  <p className="text-sm">{selected.customer_name}</p>
+                <div className="bg-stone-light/40 p-4 rounded border border-ink-100">
+                  <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Customer Information</h3>
+                  <p className="text-sm font-medium text-ink-900">{selected.customer_name}</p>
                   <p className="text-sm text-ink-500">{selected.customer_email}</p>
                   <p className="text-sm text-ink-500">{selected.customer_phone}</p>
                 </div>
 
                 {/* Shipping */}
-                <div>
+                <div className="bg-stone-light/40 p-4 rounded border border-ink-100">
                   <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Shipping Address</h3>
-                  <p className="text-sm text-ink-500">{selected.shipping_address}</p>
+                  <p className="text-sm text-ink-900">{selected.shipping_address}</p>
                   <p className="text-sm text-ink-500">{selected.city}{selected.postal_code ? `, ${selected.postal_code}` : ''}</p>
-                  {selected.order_notes && <p className="text-sm text-ink-500 mt-2"><span className="text-ink-400">Notes:</span> {selected.order_notes}</p>}
+                  {selected.order_notes && <p className="text-sm text-ink-600 mt-2 bg-amber-50 p-2.5 rounded border border-amber-100"><span className="font-medium text-amber-900">Notes:</span> {selected.order_notes}</p>}
                 </div>
 
                 {/* Items */}
-                <div>
-                  <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Items</h3>
+                <div className="bg-stone-light/40 p-4 rounded border border-ink-100">
+                  <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Order Items</h3>
                   <div className="space-y-3">
                     {selected.order_items?.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <div>
-                          <p className="font-medium">{item.product_name} × {item.quantity}</p>
-                          {item.variant_description && <p className="text-xs text-ink-400">{item.variant_description}</p>}
+                      <div key={item.id} className="flex gap-3 text-sm">
+                        {item.image_url && <img src={item.image_url} alt="" className="w-12 h-14 object-cover bg-white rounded shrink-0 border border-ink-100" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-ink-900 truncate">{item.product_name}</p>
+                          {item.variant_description && <p className="text-xs text-ink-500">{item.variant_description}</p>}
+                          <p className="text-xs text-ink-400">Qty: {item.quantity} × {formatPrice(item.price)}</p>
                         </div>
-                        <span>{formatPrice(item.price * item.quantity)}</span>
+                        <span className="font-medium text-ink-900 shrink-0">{formatPrice(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 pt-4 border-t border-ink-100 space-y-1 text-sm">
+                  <div className="mt-4 pt-4 border-t border-ink-200 space-y-1.5 text-sm">
                     <div className="flex justify-between text-ink-500"><span>Subtotal</span><span>{formatPrice(selected.subtotal)}</span></div>
                     {selected.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount {selected.coupon_code ? `(${selected.coupon_code})` : ''}</span><span>-{formatPrice(selected.discount)}</span></div>}
                     <div className="flex justify-between text-ink-500"><span>Shipping</span><span>{selected.shipping === 0 ? 'Free' : formatPrice(selected.shipping)}</span></div>
-                    <div className="flex justify-between font-medium pt-2 border-t border-ink-50"><span>Total</span><span>{formatPrice(selected.total)}</span></div>
+                    <div className="flex justify-between font-medium pt-2 border-t border-ink-200 text-ink-900 text-base"><span>Total</span><span>{formatPrice(selected.total)}</span></div>
                   </div>
                 </div>
 
-                {/* Payment */}
-                <div>
-                  <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Payment</h3>
-                  <p className="text-sm">Method: <span className="font-medium">{selected.payment_method === 'cod' ? 'Cash on Delivery' : 'Bank Transfer'}</span></p>
-                  <p className="text-sm mt-1">Status: <span className="font-medium capitalize">{selected.payment_status.replace(/_/g, ' ')}</span></p>
-                  {selected.transaction_id && <p className="text-sm mt-1">Transaction ID: <span className="font-medium">{selected.transaction_id}</span></p>}
-                  {selected.payment_screenshot && (
-                    <div className="mt-3">
-                      <p className="text-xs text-ink-400 mb-1">Payment Screenshot:</p>
-                      <a href={selected.payment_screenshot} target="_blank" rel="noopener noreferrer">
-                        <img src={selected.payment_screenshot} alt="Payment proof" className="w-40 h-40 object-cover border border-ink-100" />
-                      </a>
+                {/* Payment & Screenshot proof */}
+                <div className="bg-stone-light/40 p-4 rounded border border-ink-100 space-y-4">
+                  <h3 className="text-xs tracking-widest uppercase font-medium text-ink-400">Payment Information</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-xs text-ink-400 block">Payment Method</span>
+                      <span className="font-medium text-ink-900">{selected.payment_method === 'cod' ? 'Cash on Delivery' : 'Bank Transfer'}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-ink-400 block">Verification Status</span>
+                      <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded capitalize ${selected.payment_status === 'verified' ? 'bg-green-100 text-green-800' : selected.payment_status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {selected.payment_status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selected.transaction_id && (
+                    <div>
+                      <span className="text-xs text-ink-400 block">Transaction Reference / ID</span>
+                      <span className="font-mono text-sm font-medium text-ink-900 bg-white px-2.5 py-1 rounded border border-ink-100 inline-block mt-0.5">
+                        {selected.transaction_id}
+                      </span>
                     </div>
                   )}
-                  {selected.verification_notes && <p className="text-sm mt-2 text-ink-500">Notes: {selected.verification_notes}</p>}
-                  {selected.verified_date && <p className="text-xs text-ink-400 mt-1">Verified: {new Date(selected.verified_date).toLocaleString()}</p>}
 
-                  {/* Payment actions */}
-                  <div className="flex gap-2 mt-4">
-                    <button onClick={() => updatePaymentStatus(selected, 'verified')} className="flex items-center gap-1 px-3 py-2 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors">
-                      <Check className="w-3 h-3" /> Verify
+                  {/* Payment Screenshot Preview */}
+                  {selected.payment_screenshot ? (
+                    <div className="mt-4 pt-4 border-t border-ink-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs uppercase tracking-wider font-semibold text-ink-700 flex items-center gap-1.5">
+                          <ImageIcon className="w-4 h-4 text-amber-600" /> Payment Receipt / Screenshot
+                        </span>
+                        <a
+                          href={selected.payment_screenshot}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
+                        >
+                          Open Original <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+
+                      <div className="relative group overflow-hidden rounded-lg border border-ink-200 bg-black/5 max-w-sm">
+                        <img
+                          src={selected.payment_screenshot}
+                          alt="Payment proof screenshot"
+                          className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                          onClick={() => setScreenshotModalUrl(selected.payment_screenshot)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setScreenshotModalUrl(selected.payment_screenshot)}
+                          className="absolute inset-0 bg-ink-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-2"
+                        >
+                          <ZoomIn className="w-5 h-5" /> Click to Enlarge
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    selected.payment_method === 'bank_transfer' && (
+                      <p className="text-xs text-amber-700 italic bg-amber-50 p-2.5 rounded border border-amber-100 mt-2">
+                        No payment screenshot was uploaded by the customer for this bank transfer order.
+                      </p>
+                    )
+                  )}
+
+                  {selected.verification_notes && <p className="text-sm text-ink-600 bg-white p-2.5 rounded border border-ink-100">Verification Note: {selected.verification_notes}</p>}
+                  {selected.verified_date && <p className="text-xs text-ink-400">Verified at: {new Date(selected.verified_date).toLocaleString()}</p>}
+
+                  {/* Payment status actions */}
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => updatePaymentStatus(selected, 'verified')}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium transition-colors"
+                    >
+                      <Check className="w-4 h-4" /> Verify Payment
                     </button>
-                    <button onClick={() => updatePaymentStatus(selected, 'rejected')} className="flex items-center gap-1 px-3 py-2 text-xs bg-red-600 text-white hover:bg-red-700 transition-colors">
-                      <XCircle className="w-3 h-3" /> Reject
+                    <button
+                      onClick={() => updatePaymentStatus(selected, 'rejected')}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
+                    >
+                      <XCircle className="w-4 h-4" /> Reject Payment
                     </button>
                   </div>
                 </div>
 
                 {/* Order Status */}
-                <div>
-                  <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Order Status</h3>
+                <div className="bg-stone-light/40 p-4 rounded border border-ink-100">
+                  <h3 className="text-xs tracking-widest uppercase font-medium mb-3 text-ink-400">Update Order Status</h3>
                   <select value={selected.status} onChange={(e) => { updateStatus(selected.id, e.target.value); setSelected({ ...selected, status: e.target.value }); }} className="input-field">
                     {ORDER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
                   </select>
                 </div>
 
                 {/* Danger Zone */}
-                <div className="pt-6 border-t border-red-100">
+                <div className="pt-4 border-t border-red-100">
                   <button
                     onClick={() => setDeleteId(selected.id)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors font-medium"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors font-medium rounded"
                   >
                     Delete Order
                   </button>
@@ -223,6 +298,45 @@ export default function AdminOrders() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Full Resolution Payment Screenshot Lightbox Modal */}
+      <AnimatePresence>
+        {screenshotModalUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-ink-950/90 z-[100] flex items-center justify-center p-4"
+            onClick={() => setScreenshotModalUrl(null)}
+          >
+            <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+              <div className="w-full flex justify-between items-center mb-3 text-white">
+                <span className="text-sm font-medium">Payment Proof Screenshot</span>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={screenshotModalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-amber-300 hover:underline flex items-center gap-1"
+                  >
+                    Open in New Tab <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    onClick={() => setScreenshotModalUrl(null)}
+                    className="p-1 rounded-full hover:bg-white/20 text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-auto max-h-[80vh] w-full flex justify-center bg-black/40 rounded-lg p-2 border border-white/10">
+                <img src={screenshotModalUrl} alt="Payment proof high resolution" className="max-w-full max-h-[75vh] object-contain rounded" />
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

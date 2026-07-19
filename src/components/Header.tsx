@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Search, Menu, X, User } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, User, Truck } from 'lucide-react';
 import { useCartStore } from '../store/cart';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -148,6 +148,17 @@ export default function Header() {
 
             {/* Actions */}
             <div className="flex items-center gap-4 lg:gap-5">
+              <a
+                href="https://fastex.pk/trackingDetail?trackingNo="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1 hover:text-ink-500 transition-colors flex items-center gap-1.5"
+                title="Track Order"
+                aria-label="Track Order"
+              >
+                <Truck className="w-5 h-5 text-ink-900 hover:text-ink-600 transition-colors" />
+                <span className="hidden xl:inline text-[11px] tracking-widest uppercase font-medium">Track Order</span>
+              </a>
               <button onClick={() => setSearchOpen(!searchOpen)} className="p-1" aria-label="Search">
                 <Search className="w-5 h-5" />
               </button>
@@ -224,6 +235,21 @@ export default function Header() {
                     <User className="w-4 h-4" />
                     {user ? 'My Account' : 'Sign In / Register'}
                   </Link>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: (navLinks.length + 1) * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <a
+                    href="https://fastex.pk/trackingDetail?trackingNo="
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm tracking-widest uppercase font-medium py-3.5 border-t border-ink-50 flex items-center gap-2 text-ink-900 hover:text-ink-500 transition-colors"
+                  >
+                    <Truck className="w-4 h-4 text-ink-900" />
+                    Track Order
+                  </a>
                 </motion.div>
               </nav>
             </motion.div>

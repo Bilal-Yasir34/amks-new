@@ -3,21 +3,57 @@ import { motion } from 'framer-motion';
 import { supabase, MEDIA_BUCKET } from '../../lib/supabase';
 import type { Settings } from '../../types';
 import toast from 'react-hot-toast';
+import { useSettings } from '../../context/SettingsContext';
+import { AlertTriangle, CheckCircle, Wrench, Lock, Unlock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+
+const SETTINGS_PASSWORD = 'AmksSettings03018621370!$$$';
+const SESSION_KEY = 'amks_settings_auth';
 
 export default function AdminSettings() {
+  const { updateSettingsState } = useSettings();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'general' | 'bank' | 'shipping' | 'social'>('general');
 
+  // Password Protection State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem(SESSION_KEY) === 'true';
+  });
+  const [enteredPassword, setEnteredPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
   useEffect(() => {
-    supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => setSettings(data as Settings | null));
-  }, []);
+    if (isAuthenticated) {
+      supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => setSettings(data as Settings | null));
+    }
+  }, [isAuthenticated]);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (enteredPassword === SETTINGS_PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      setIsAuthenticated(true);
+      setErrorMsg('');
+      toast.success('Settings unlocked successfully.');
+    } else {
+      setErrorMsg('Incorrect password. Access denied.');
+      toast.error('Incorrect settings password.');
+    }
+  };
+
+  const handleLockSettings = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setIsAuthenticated(false);
+    setEnteredPassword('');
+    toast.success('Settings locked.');
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings) return;
     setSaving(true);
-    const { error } = await supabase.from('settings').update({
+    const updatedData = {
       store_name: settings.store_name,
       contact_email: settings.contact_email,
       phone: settings.phone,
@@ -37,8 +73,16 @@ export default function AdminSettings() {
       shipping_charge: settings.shipping_charge,
       free_shipping_threshold: settings.free_shipping_threshold,
       maintenance_mode: settings.maintenance_mode,
-    }).eq('id', 1);
-    if (error) toast.error('Failed to save.'); else toast.success('Settings saved.');
+    };
+
+    const { error } = await supabase.from('settings').update(updatedData).eq('id', 1);
+
+    if (error) {
+      toast.error('Failed to save settings.');
+    } else {
+      updateSettingsState({ ...settings, ...updatedData });
+      toast.success(settings.maintenance_mode ? 'Settings saved. Maintenance mode is now ON.' : 'Settings saved. Store is live.');
+    }
     setSaving(false);
   };
 
@@ -52,7 +96,68 @@ export default function AdminSettings() {
     toast.success('Image uploaded.');
   };
 
-  if (!settings) return <p className="text-sm text-ink-400">Loading...</p>;
+  // Render Lock Screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md bg-white p-8 rounded-xl border border-ink-100 shadow-sm text-center"
+        >
+          <div className="w-14 h-14 bg-amber-50 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-200">
+            <Lock className="w-6 h-6" />
+          </div>
+
+          <h2 className="font-display text-2xl font-light text-ink-900 mb-2">Protected Settings</h2>
+          <p className="text-xs text-ink-400 mb-6 leading-relaxed">
+            Store settings contain sensitive configuration. Please enter the security password to view and edit settings.
+          </p>
+
+          <form onSubmit={handlePasswordSubmit} className="space-y-4 text-left">
+            <div>
+              <label className="text-xs text-ink-400 block mb-1 font-medium">Settings Security Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={enteredPassword}
+                  onChange={(e) => setEnteredPassword(e.target.value)}
+                  placeholder="Enter settings password"
+                  className="input-field pr-10"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-900 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-2.5 rounded border border-red-100">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                {errorMsg}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="btn-primary w-full py-3 text-xs tracking-widest uppercase flex items-center justify-center gap-2"
+            >
+              <Unlock className="w-4 h-4" />
+              Unlock Settings
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!settings) return <p className="text-sm text-ink-400">Loading settings...</p>;
 
   const tabs = [
     { key: 'general', label: 'General' },
@@ -63,7 +168,20 @@ export default function AdminSettings() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-light mb-8">Store Settings</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="font-display text-3xl font-light">Store Settings</h1>
+          <p className="text-xs text-ink-400 mt-1">Manage general configuration, bank accounts, and maintenance status.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleLockSettings}
+          className="inline-flex items-center gap-2 px-3 py-2 text-xs text-ink-600 hover:text-ink-900 bg-white border border-ink-200 hover:border-ink-300 rounded transition-colors self-start sm:self-auto"
+        >
+          <Lock className="w-3.5 h-3.5" />
+          Lock Settings
+        </button>
+      </div>
 
       <div className="flex gap-6 border-b border-ink-100 mb-8 overflow-x-auto">
         {tabs.map((t) => (
@@ -95,9 +213,44 @@ export default function AdminSettings() {
               <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'favicon')} className="text-xs" />
               {settings.favicon && <button type="button" onClick={() => setSettings({ ...settings, favicon: null })} className="block text-xs text-red-500 mt-1">Remove favicon</button>}
             </div>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" checked={settings.maintenance_mode} onChange={(e) => setSettings({ ...settings, maintenance_mode: e.target.checked })} className="accent-ink-900" /> Maintenance Mode
-            </label>
+
+            {/* Maintenance Mode Option */}
+            <div className={`p-4 rounded-lg border transition-all ${settings.maintenance_mode ? 'bg-amber-50 border-amber-300' : 'bg-stone-50 border-ink-100'}`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-lg ${settings.maintenance_mode ? 'bg-amber-100 text-amber-800' : 'bg-ink-100 text-ink-600'}`}>
+                    <Wrench className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-ink-900">Maintenance Mode</h3>
+                      {settings.maintenance_mode ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-200 text-amber-900">
+                          <AlertTriangle className="w-3 h-3" /> ON (Store Hidden)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                          <CheckCircle className="w-3 h-3" /> OFF (Store Live)
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-ink-500 mt-1">
+                      When enabled, public visitors will see a maintenance screen. Admins can still access the website & admin panel.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                  <input
+                    type="checkbox"
+                    checked={settings.maintenance_mode}
+                    onChange={(e) => setSettings({ ...settings, maintenance_mode: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-ink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-ink-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                </label>
+              </div>
+            </div>
           </motion.div>
         )}
 
