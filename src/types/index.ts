@@ -196,7 +196,7 @@ export interface HeroBanner {
   cta_text: string | null;
   cta_link: string | null;
   image_url: string | null;
-  video_url: string | null;
+  video_url?: string | null;
   sort_order: number;
   is_visible: boolean;
   created_at: string;

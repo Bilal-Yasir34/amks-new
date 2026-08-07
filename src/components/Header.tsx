@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Search, Menu, X, User, Truck } from 'lucide-react';
 import { useCartStore } from '../store/cart';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { supabase } from '../lib/supabase';
-import type { Settings, Product } from '../types';
+import type { Product } from '../types';
 import { formatPrice } from '../lib/utils';
 
 export default function Header() {
@@ -19,13 +20,7 @@ export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems());
   const toggleCart = useCartStore((s) => s.toggleCart);
   const { user } = useAuth();
-  const [settings, setSettings] = useState<Settings | null>(null);
-
-  useEffect(() => {
-    supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
-      if (data) setSettings(data as Settings);
-    });
-  }, []);
+  const { settings } = useSettings();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -122,11 +117,16 @@ export default function Header() {
             {/* Logo */}
             <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 lg:order-first flex items-center">
               {settings?.logo ? (
-                <img src={settings.logo} alt={settings.store_name || "AMKS"} className="h-8 lg:h-10 object-contain" />
+                <img src={settings.logo} alt={settings.store_name || "AMKS by AMKAS INTERNATIONAL"} className="h-8 lg:h-10 object-contain" />
               ) : (
-                <span className="font-display text-2xl lg:text-3xl tracking-[0.3em] font-medium text-ink-900">
-                  {settings?.store_name || "AMKS"}
-                </span>
+                <div className="flex flex-col items-center lg:items-start leading-none">
+                  <span className="font-display text-2xl lg:text-3xl tracking-[0.3em] font-medium text-ink-900">
+                    {settings?.store_name || "AMKS"}
+                  </span>
+                  <span className="text-[9px] tracking-[0.25em] uppercase text-ink-400 font-sans mt-0.5 font-normal">
+                    by AMKAS INTERNATIONAL
+                  </span>
+                </div>
               )}
             </Link>
 
@@ -199,9 +199,12 @@ export default function Header() {
             >
               <div className="flex items-center justify-between p-6 border-b border-ink-100">
                 {settings?.logo ? (
-                  <img src={settings.logo} alt={settings.store_name || "AMKS"} className="h-8 object-contain" />
+                  <img src={settings.logo} alt={settings.store_name || "AMKS by AMKAS INTERNATIONAL"} className="h-8 object-contain" />
                 ) : (
-                  <span className="font-display text-2xl tracking-[0.3em]">{settings?.store_name || "AMKS"}</span>
+                  <div className="flex flex-col leading-none">
+                    <span className="font-display text-2xl tracking-[0.3em] font-medium text-ink-900">{settings?.store_name || "AMKS"}</span>
+                    <span className="text-[8px] tracking-[0.25em] uppercase text-ink-400 font-sans mt-0.5">by AMKAS INTERNATIONAL</span>
+                  </div>
                 )}
                 <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
                   <X className="w-5 h-5" />

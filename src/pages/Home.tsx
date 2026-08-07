@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Truck, ShieldCheck, Sparkles, Award, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useSettings } from '../context/SettingsContext';
 import type { Product, Category, HeroBanner } from '../types';
 import ProductCard from '../components/ProductCard';
 import Loader from '../components/Loader';
@@ -39,25 +40,23 @@ export default function Home() {
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [activeBanner, setActiveBanner] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [settings, setSettings] = useState<any>(null);
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [{ data: bannersData }, { data: catData }, { data: featuredData }, { data: newArrivalsData }, { data: bestSellersData }, { data: settingsData }] = await Promise.all([
+      const [{ data: bannersData }, { data: catData }, { data: featuredData }, { data: newArrivalsData }, { data: bestSellersData }] = await Promise.all([
         supabase.from('hero_banners').select('*').eq('is_visible', true).order('sort_order'),
         supabase.from('categories').select('*').eq('is_visible', true).order('sort_order'),
         supabase.from('products').select('*, category:categories(*)').eq('homepage_section', 'featured').eq('status', 'active').limit(4),
         supabase.from('products').select('*, category:categories(*)').eq('homepage_section', 'new_arrival').eq('status', 'active').order('created_at', { ascending: false }).limit(4),
         supabase.from('products').select('*, category:categories(*)').eq('homepage_section', 'best_seller').eq('status', 'active').limit(4),
-        supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
       ]);
       setBanners((bannersData || []) as HeroBanner[]);
       setCategories((catData || []) as Category[]);
       setFeatured((featuredData || []) as Product[]);
       setNewArrivals((newArrivalsData || []) as Product[]);
       setBestSellers((bestSellersData || []) as Product[]);
-      setSettings(settingsData);
       setLoading(false);
     })();
   }, []);

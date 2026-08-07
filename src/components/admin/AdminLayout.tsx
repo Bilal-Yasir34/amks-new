@@ -2,40 +2,24 @@ import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Package, FolderTree, ShoppingCart, Ticket, Settings, LogOut, ExternalLink, Image, Users, Boxes, Home, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminLayout() {
   const { user, isAdmin } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
-      if (data) {
-        setSettings(data);
-        if (data.favicon) {
-          let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
-          if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            document.head.appendChild(link);
-          }
-          link.href = data.favicon;
-        }
-      }
-    });
-  }, []);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();

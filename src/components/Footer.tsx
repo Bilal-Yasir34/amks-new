@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Category, Settings } from '../types';
+import { useSettings } from '../context/SettingsContext';
+import type { Category } from '../types';
 import toast from 'react-hot-toast';
 
 const WhatsAppIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -18,15 +19,12 @@ const getSocialLink = (url: string | null | undefined, fallback: string) => {
 
 export default function Footer() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const { settings } = useSettings();
   const [email, setEmail] = useState('');
 
   useEffect(() => {
     supabase.from('categories').select('*').eq('is_visible', true).order('sort_order').then(({ data }) => {
       if (data) setCategories(data as Category[]);
-    });
-    supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
-      if (data) setSettings(data as Settings);
     });
   }, []);
 
@@ -42,6 +40,12 @@ export default function Footer() {
       setEmail('');
     }
   };
+
+  const defaultWhatsapp = settings?.phone 
+    ? `https://wa.me/${settings.phone.replace(/[^0-9]/g, '')}`
+    : "https://wa.me/923018621370";
+  const contactEmail = settings?.contact_email || 'amks.pk@hotmail.com';
+  const contactPhone = settings?.phone || '+92 301 8621370';
 
   return (
     <footer className="bg-ink-900 text-white">
@@ -75,9 +79,9 @@ export default function Footer() {
           {/* Brand */}
           <div>
             {settings?.logo ? (
-              <img src={settings.logo} alt={settings.store_name || "AMKS"} className="h-8 object-contain mb-4" />
+              <img src={settings.logo} alt={settings.store_name || "AMKS by AMKAS INTERNATIONAL"} className="h-8 object-contain mb-4" />
             ) : (
-              <h4 className="font-display text-2xl tracking-[0.3em] mb-4">{settings?.store_name || "AMKS"}</h4>
+              <h4 className="font-display text-2xl tracking-[0.3em] mb-4">{settings?.store_name || "AMKS by AMKAS INTERNATIONAL"}</h4>
             )}
             <p className="text-ink-400 text-sm leading-relaxed">
               {settings?.footer_text || 'Premium Shawls & Tweed Fabric. Crafted with luxury.'}
@@ -102,7 +106,7 @@ export default function Footer() {
                 <Facebook className="w-5 h-5" />
               </a>
               <a
-                href={getSocialLink(settings?.social_links?.whatsapp, "https://wa.me/923018621370")}
+                href={getSocialLink(settings?.social_links?.whatsapp, defaultWhatsapp)}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -145,15 +149,15 @@ export default function Footer() {
             <h5 className="text-xs tracking-widest uppercase font-medium mb-5 text-ink-300">Contact</h5>
             <ul className="space-y-4">
               <li>
-                <a href="mailto:amks.pk@hotmail.com" className="flex items-start gap-3 text-sm text-ink-400 hover:text-white transition-colors">
+                <a href={`mailto:${contactEmail}`} className="flex items-start gap-3 text-sm text-ink-400 hover:text-white transition-colors">
                   <Mail className="w-4 h-4 mt-0.5 shrink-0" />
-                  amks.pk@hotmail.com
+                  {contactEmail}
                 </a>
               </li>
               <li>
-                <a href="tel:+923018621370" className="flex items-start gap-3 text-sm text-ink-400 hover:text-white transition-colors">
+                <a href={`tel:${contactPhone.replace(/\s+/g, '')}`} className="flex items-start gap-3 text-sm text-ink-400 hover:text-white transition-colors">
                   <Phone className="w-4 h-4 mt-0.5 shrink-0" />
-                  +92 301 8621370
+                  {contactPhone}
                 </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-ink-400">
@@ -169,7 +173,7 @@ export default function Footer() {
       <div className="border-t border-ink-700">
         <div className="section-padding py-6 text-center">
           <p className="text-xs text-ink-500 tracking-wider">
-            © {new Date().getFullYear()} AMKS. All rights reserved. Crafted with luxury.
+            © {new Date().getFullYear()} AMKS by AMKAS INTERNATIONAL. All rights reserved. Crafted with luxury.
           </p>
         </div>
       </div>

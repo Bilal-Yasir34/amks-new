@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase, PAYMENT_BUCKET } from '../lib/supabase';
 import { useCartStore } from '../store/cart';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { formatPrice, generateOrderNumber } from '../lib/utils';
+import { sendWhatsAppOrderConfirmation } from '../lib/whatsapp';
 import toast from 'react-hot-toast';
-import type { Settings } from '../types';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, subtotal, couponCode, couponDiscount, clearCart } = useCartStore();
   const { user } = useAuth();
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const { settings } = useSettings();
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [transactionId, setTransactionId] = useState('');
@@ -20,12 +21,6 @@ export default function Checkout() {
   const [form, setForm] = useState({
     name: '', email: user?.email || '', phone: '', address: '', city: '', postalCode: '', notes: '',
   });
-
-  useEffect(() => {
-    supabase.from('settings').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
-      if (data) setSettings(data as Settings);
-    });
-  }, []);
 
   const sub = subtotal();
   const discount = couponDiscount;
@@ -155,6 +150,19 @@ export default function Checkout() {
         }
       } catch (stockErr) {
         console.warn('Stock update notice:', stockErr);
+      }
+
+      // 5. Send automated WhatsApp confirmation with Quick Reply buttons
+      try {
+        await sendWhatsAppOrderConfirmation({
+          orderId,
+          orderNumber,
+          customerName: form.name,
+          customerPhone: form.phone,
+          totalAmount: total,
+        });
+      } catch (waErr) {
+        console.warn('WhatsApp auto-confirmation notice:', waErr);
       }
 
       clearCart();

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Copy, X, Search, Archive, RotateCcw, Layers, ChevronDown, ChevronUp, GripVertical, Trash } from 'lucide-react';
 import { supabase, MEDIA_BUCKET } from '../../lib/supabase';
 import { slugify, formatPrice } from '../../lib/utils';
-import type { Product, Category, ProductImage, ProductVariantGroup, ProductVariantCombination, ProductVariantImage } from '../../types';
+import type { Product, Category, ProductImage, ProductVariantGroup, ProductVariantValue, ProductVariantCombination, ProductVariantImage } from '../../types';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import Pagination from '../../components/admin/Pagination';

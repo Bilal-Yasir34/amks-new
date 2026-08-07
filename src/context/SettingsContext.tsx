@@ -49,6 +49,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateSettingsState = (newSettings: Settings) => {
     setSettings(newSettings);
+    if (newSettings.favicon) {
+      let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = newSettings.favicon;
+    }
   };
 
   useEffect(() => {

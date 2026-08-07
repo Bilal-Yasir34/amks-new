@@ -2,11 +2,16 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, Clock, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useSettings } from '../context/SettingsContext';
 import toast from 'react-hot-toast';
 
 export default function Contact() {
+  const { settings } = useSettings();
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
+
+  const contactEmail = settings?.contact_email || 'amks.pk@hotmail.com';
+  const contactPhone = settings?.phone || '+92 301 8621370';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +54,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="text-xs tracking-widest uppercase font-medium mb-1">Email</h4>
-                  <a href="mailto:amks.pk@hotmail.com" className="text-sm text-ink-600 hover:text-ink-900 transition-colors">amks.pk@hotmail.com</a>
+                  <a href={`mailto:${contactEmail}`} className="text-sm text-ink-600 hover:text-ink-900 transition-colors">{contactEmail}</a>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -58,7 +63,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="text-xs tracking-widest uppercase font-medium mb-1">Phone</h4>
-                  <a href="tel:+923018621370" className="text-sm text-ink-600 hover:text-ink-900 transition-colors">+92 301 8621370</a>
+                  <a href={`tel:${contactPhone.replace(/\s+/g, '')}`} className="text-sm text-ink-600 hover:text-ink-900 transition-colors">{contactPhone}</a>
                 </div>
               </div>
               <div className="flex items-start gap-4">
