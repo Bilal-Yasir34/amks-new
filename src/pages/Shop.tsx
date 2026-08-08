@@ -44,7 +44,7 @@ export default function Shop() {
       setLoading(true);
       const [{ data: catData }, { data: prodData }] = await Promise.all([
         supabase.from('categories').select('*').eq('is_visible', true).order('sort_order'),
-        supabase.from('products').select('*, category:categories(*)').eq('status', 'active').eq('is_visible', true).order('created_at', { ascending: false }),
+        supabase.from('products').select('*, category:categories(*, parent:categories(*))').eq('status', 'active').eq('is_visible', true).order('created_at', { ascending: false }),
       ]);
       setCategories((catData || []) as Category[]);
       setProducts((prodData || []) as Product[]);
@@ -77,7 +77,18 @@ export default function Shop() {
       });
     }
     if (categorySlug) {
-      result = result.filter((p) => p.category?.slug === categorySlug);
+      const activeCat = categories.find((c) => c.slug === categorySlug);
+      if (activeCat) {
+        if (!activeCat.parent_id) {
+          const subcatIds = categories.filter((c) => c.parent_id === activeCat.id).map((c) => c.id);
+          const validIds = new Set([activeCat.id, ...subcatIds]);
+          result = result.filter((p) => (p.category_id && validIds.has(p.category_id)) || p.category?.slug === categorySlug || p.category?.parent?.slug === categorySlug);
+        } else {
+          result = result.filter((p) => p.category?.slug === categorySlug);
+        }
+      } else {
+        result = result.filter((p) => p.category?.slug === categorySlug);
+      }
     }
     if (maxPrice) {
       result = result.filter((p) => {
@@ -136,19 +147,48 @@ export default function Shop() {
         <div className="space-y-2">
           <button
             onClick={() => updateParam('category', '')}
-            className={`text-sm transition-colors ${!categorySlug ? 'text-ink-900 font-medium' : 'text-ink-400 hover:text-ink-900'}`}
+            className={`block w-full text-left text-sm transition-colors ${!categorySlug ? 'text-ink-900 font-semibold' : 'text-ink-500 hover:text-ink-900'}`}
           >
             All Categories
           </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => updateParam('category', c.slug)}
-              className={`block text-sm transition-colors ${categorySlug === c.slug ? 'text-ink-900 font-medium' : 'text-ink-400 hover:text-ink-900'}`}
-            >
-              {c.name}
-            </button>
-          ))}
+          {categories
+            .filter((c) => !c.parent_id)
+            .map((parent) => {
+              const subcats = categories.filter((c) => c.parent_id === parent.id);
+              const isParentActive = categorySlug === parent.slug;
+
+              return (
+                <div key={parent.id} className="pt-1">
+                  <button
+                    onClick={() => updateParam('category', parent.slug)}
+                    className={`block w-full text-left text-sm transition-colors font-medium ${
+                      isParentActive ? 'text-ink-900 font-semibold' : 'text-ink-700 hover:text-ink-900'
+                    }`}
+                  >
+                    {parent.name}
+                  </button>
+
+                  {subcats.length > 0 && (
+                    <div className="pl-3 mt-1.5 space-y-1.5 border-l border-ink-200 ml-1">
+                      {subcats.map((sub) => {
+                        const isSubActive = categorySlug === sub.slug;
+                        return (
+                          <button
+                            key={sub.id}
+                            onClick={() => updateParam('category', sub.slug)}
+                            className={`block w-full text-left text-xs transition-colors ${
+                              isSubActive ? 'text-ink-900 font-semibold underline' : 'text-ink-400 hover:text-ink-900'
+                            }`}
+                          >
+                            ↳ {sub.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
       <div>

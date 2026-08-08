@@ -16,7 +16,7 @@ export default function AdminInventory() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('products').select('*, category:categories(*)').eq('archived', false).order('name');
+    const { data } = await supabase.from('products').select('*, category:categories(*, parent:categories(*))').eq('archived', false).order('name');
     setProducts((data || []) as Product[]);
     setLoading(false);
   }, []);
@@ -124,7 +124,9 @@ export default function AdminInventory() {
                         <img src={p.featured_image || ''} alt="" className="w-10 h-12 object-cover bg-ink-50" />
                         <div>
                           <p className="font-medium line-clamp-1">{p.name}</p>
-                          <p className="text-xs text-ink-400">{p.category?.name || '—'}</p>
+                          <p className="text-xs text-ink-400">
+                            {p.category ? (p.category.parent ? `${p.category.parent.name} > ${p.category.name}` : p.category.name) : '—'}
+                          </p>
                         </div>
                       </div>
                     </td>

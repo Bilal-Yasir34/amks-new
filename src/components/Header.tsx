@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Search, Menu, X, User, Truck } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, User, Truck, ChevronDown } from 'lucide-react';
 import { useCartStore } from '../store/cart';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { supabase } from '../lib/supabase';
-import type { Product } from '../types';
+import type { Product, Category } from '../types';
 import { formatPrice } from '../lib/utils';
 
 export default function Header() {
@@ -15,6 +15,9 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [liveResults, setLiveResults] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
+
   const location = useLocation();
   const navigate = useNavigate();
   const totalItems = useCartStore((s) => s.totalItems());
@@ -33,6 +36,16 @@ export default function Header() {
     setSearchOpen(false);
     setLiveResults([]);
   }, [location.pathname]);
+
+  // Load visible categories for dynamic navigation dropdowns
+  useEffect(() => {
+    supabase
+      .from('categories')
+      .select('*')
+      .eq('is_visible', true)
+      .order('sort_order')
+      .then(({ data }) => setCategories((data || []) as Category[]));
+  }, []);
 
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -60,9 +73,11 @@ export default function Header() {
           return tokens.every((token) => {
             const stem = token.endsWith('s') && token.length > 3 ? token.slice(0, -1) : token;
             const matchTarget = (text: string) => {
-              return text.includes(token) || 
-                     text.includes(stem) ||
-                     (token.endsWith('s') && text.includes(token.slice(0, -1)));
+              return (
+                text.includes(token) ||
+                text.includes(stem) ||
+                (token.endsWith('s') && text.includes(token.slice(0, -1)))
+              );
             };
             return matchTarget(name) || matchTarget(desc) || matchTarget(sku) || matchTarget(catName);
           });
@@ -84,14 +99,7 @@ export default function Header() {
     }
   };
 
-  const navLinks = [
-    { label: 'Home', to: '/' },
-    { label: 'Shop', to: '/shop' },
-    { label: 'Shawls', to: '/category/shawls' },
-    { label: 'Tweed Fabric', to: '/category/tweed-fabric' },
-    { label: 'About', to: '/about' },
-    { label: 'Contact', to: '/contact' },
-  ];
+  const parentCategories = categories.filter((c) => !c.parent_id);
 
   return (
     <>
@@ -131,19 +139,95 @@ export default function Header() {
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`text-xs tracking-widest uppercase font-medium transition-colors duration-300 relative group ${
-                    location.pathname === link.to ? 'text-ink-900' : 'text-ink-500 hover:text-ink-900'
-                  }`}
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-ink-900 transition-all duration-300 group-hover:w-full" />
-                </Link>
-              ))}
+            <nav className="hidden lg:flex items-center gap-7 absolute left-1/2 -translate-x-1/2">
+              <Link
+                to="/"
+                className={`text-xs tracking-widest uppercase font-medium transition-colors duration-300 relative group py-2 ${
+                  location.pathname === '/' ? 'text-ink-900' : 'text-ink-500 hover:text-ink-900'
+                }`}
+              >
+                Home
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-ink-900 transition-all duration-300 group-hover:w-full" />
+              </Link>
+
+              <Link
+                to="/shop"
+                className={`text-xs tracking-widest uppercase font-medium transition-colors duration-300 relative group py-2 ${
+                  location.pathname === '/shop' ? 'text-ink-900' : 'text-ink-500 hover:text-ink-900'
+                }`}
+              >
+                Shop
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-ink-900 transition-all duration-300 group-hover:w-full" />
+              </Link>
+
+              {/* Dynamic Category Nav Items with Dropdowns */}
+              {parentCategories.map((parent) => {
+                const subcats = categories.filter((c) => c.parent_id === parent.id);
+                const parentPath = `/category/${parent.slug}`;
+                const isActive = location.pathname === parentPath || subcats.some((s) => location.pathname === `/category/${s.slug}`);
+
+                return (
+                  <div key={parent.id} className="relative group py-2">
+                    <Link
+                      to={parentPath}
+                      className={`text-xs tracking-widest uppercase font-medium transition-colors duration-300 flex items-center gap-1.5 ${
+                        isActive ? 'text-ink-900 font-semibold' : 'text-ink-500 hover:text-ink-900'
+                      }`}
+                    >
+                      <span>{parent.name}</span>
+                      {subcats.length > 0 && (
+                        <ChevronDown className="w-3 h-3 group-hover:rotate-180 transition-transform duration-200 opacity-70" />
+                      )}
+                    </Link>
+
+                    {/* Subcategories Dropdown Menu */}
+                    {subcats.length > 0 && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 hidden group-hover:block pt-2 z-50 animate-fade-in min-w-[200px]">
+                        <div className="bg-white border border-ink-100 shadow-xl py-3 rounded-sm">
+                          <div className="px-4 pb-2 border-b border-ink-100/60 mb-1">
+                            <Link to={parentPath} className="block text-[11px] font-bold uppercase tracking-wider text-ink-900 hover:text-ink-600">
+                              All {parent.name}
+                            </Link>
+                          </div>
+                          {subcats.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              to={`/category/${sub.slug}`}
+                              className={`block px-4 py-2 text-xs transition-colors ${
+                                location.pathname === `/category/${sub.slug}`
+                                  ? 'text-ink-900 font-semibold bg-stone-light/50'
+                                  : 'text-ink-600 hover:text-ink-900 hover:bg-stone-light/40'
+                              }`}
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              <Link
+                to="/about"
+                className={`text-xs tracking-widest uppercase font-medium transition-colors duration-300 relative group py-2 ${
+                  location.pathname === '/about' ? 'text-ink-900' : 'text-ink-500 hover:text-ink-900'
+                }`}
+              >
+                About
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-ink-900 transition-all duration-300 group-hover:w-full" />
+              </Link>
+
+              <Link
+                to="/contact"
+                className={`text-xs tracking-widest uppercase font-medium transition-colors duration-300 relative group py-2 ${
+                  location.pathname === '/contact' ? 'text-ink-900' : 'text-ink-500 hover:text-ink-900'
+                }`}
+              >
+                Contact
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-ink-900 transition-all duration-300 group-hover:w-full" />
+              </Link>
             </nav>
 
             {/* Actions */}
@@ -176,7 +260,6 @@ export default function Header() {
             </div>
           </div>
         </div>
-
       </motion.header>
 
       {/* Mobile menu */}
@@ -195,7 +278,7 @@ export default function Header() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 lg:hidden flex flex-col"
+              className="fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 lg:hidden flex flex-col overflow-y-auto"
             >
               <div className="flex items-center justify-between p-6 border-b border-ink-100">
                 {settings?.logo ? (
@@ -211,49 +294,80 @@ export default function Header() {
                 </button>
               </div>
               <nav className="flex flex-col p-6 gap-1">
-                {navLinks.map((link, idx) => (
-                  <motion.div
-                    key={link.to}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <Link
-                      to={link.to}
-                      className="text-sm tracking-widest uppercase font-medium py-3.5 border-b border-ink-50 block hover:text-ink-500 transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </motion.div>
-                ))}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: navLinks.length * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                >
+                <Link to="/" className="text-sm tracking-widest uppercase font-medium py-3 border-b border-ink-50 block hover:text-ink-500">
+                  Home
+                </Link>
+                <Link to="/shop" className="text-sm tracking-widest uppercase font-medium py-3 border-b border-ink-50 block hover:text-ink-500">
+                  Shop All
+                </Link>
+
+                {/* Mobile Categories */}
+                {parentCategories.map((parent) => {
+                  const subcats = categories.filter((c) => c.parent_id === parent.id);
+                  const isExpanded = expandedMobileCategory === parent.id;
+
+                  return (
+                    <div key={parent.id} className="border-b border-ink-50 py-2">
+                      <div className="flex items-center justify-between py-1">
+                        <Link
+                          to={`/category/${parent.slug}`}
+                          className="text-sm tracking-widest uppercase font-medium text-ink-900 hover:text-ink-600 flex-1"
+                        >
+                          {parent.name}
+                        </Link>
+                        {subcats.length > 0 && (
+                          <button
+                            onClick={() => setExpandedMobileCategory(isExpanded ? null : parent.id)}
+                            className="p-2 text-ink-400 hover:text-ink-900"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                        )}
+                      </div>
+
+                      {subcats.length > 0 && isExpanded && (
+                        <div className="pl-4 mt-1 space-y-2 pb-2 border-l border-ink-100">
+                          {subcats.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              to={`/category/${sub.slug}`}
+                              className="text-xs text-ink-600 hover:text-ink-900 block py-1 font-medium"
+                            >
+                              ↳ {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                <Link to="/about" className="text-sm tracking-widest uppercase font-medium py-3 border-b border-ink-50 block hover:text-ink-500">
+                  About
+                </Link>
+                <Link to="/contact" className="text-sm tracking-widest uppercase font-medium py-3 border-b border-ink-50 block hover:text-ink-500">
+                  Contact
+                </Link>
+
+                <div className="pt-4 space-y-3">
                   <Link
                     to={user ? '/account' : '/login'}
-                    className="text-sm tracking-widest uppercase font-medium py-3.5 flex items-center gap-2 hover:text-ink-500 transition-colors"
+                    className="text-sm tracking-widest uppercase font-medium py-2 flex items-center gap-2 text-ink-900 hover:text-ink-500"
                   >
                     <User className="w-4 h-4" />
                     {user ? 'My Account' : 'Sign In / Register'}
                   </Link>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: (navLinks.length + 1) * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                >
+
                   <a
                     href="https://fastex.pk/trackingDetail?trackingNo="
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm tracking-widest uppercase font-medium py-3.5 border-t border-ink-50 flex items-center gap-2 text-ink-900 hover:text-ink-500 transition-colors"
+                    className="text-sm tracking-widest uppercase font-medium py-2 flex items-center gap-2 text-ink-900 hover:text-ink-500"
                   >
                     <Truck className="w-4 h-4 text-ink-900" />
                     Track Order
                   </a>
-                </motion.div>
+                </div>
               </nav>
             </motion.div>
           </>

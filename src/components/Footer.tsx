@@ -134,7 +134,9 @@ export default function Footer() {
           <div>
             <h5 className="text-xs tracking-widest uppercase font-medium mb-5 text-ink-300">Categories</h5>
             <ul className="space-y-3">
-              {categories.map((cat) => (
+              {categories
+                .filter((cat) => !cat.parent_id)
+                .map((cat) => (
                 <li key={cat.id}>
                   <Link to={`/category/${cat.slug}`} className="text-sm text-ink-400 hover:text-white transition-colors">
                     {cat.name}

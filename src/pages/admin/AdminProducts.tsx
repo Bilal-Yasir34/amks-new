@@ -23,7 +23,7 @@ export default function AdminProducts() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('products').select('*, category:categories(*)').order('created_at', { ascending: false });
+    const { data } = await supabase.from('products').select('*, category:categories(*, parent:categories(*))').order('created_at', { ascending: false });
     setProducts((data || []) as Product[]);
     setLoading(false);
   }, []);
@@ -114,13 +114,36 @@ export default function AdminProducts() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <img src={p.featured_image || ''} alt={p.name} className="w-10 h-12 object-cover bg-ink-50" />
-                      <div>
-                        <p className="font-medium line-clamp-1">{p.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium line-clamp-1">{p.name}</p>
+                          {p.homepage_section === 'featured' && (
+                            <span className="text-[10px] bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1">
+                              ★ Featured
+                            </span>
+                          )}
+                          {p.homepage_section === 'best_seller' && (
+                            <span className="text-[10px] bg-orange-100 text-orange-800 font-semibold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1">
+                              🔥 Best Seller
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-ink-400">{p.sku || 'No SKU'}{p.has_variants ? ' · Variants' : ''}{p.archived ? ' · Archived' : ''}</p>
-                      </div>
                     </div>
                   </td>
-                  <td className="p-4 hidden md:table-cell text-ink-500">{p.category?.name || '—'}</td>
+                  <td className="p-4 hidden md:table-cell text-ink-500">
+                    {p.category ? (
+                      p.category.parent ? (
+                        <div className="flex flex-col text-xs">
+                          <span className="text-ink-400 font-normal">{p.category.parent.name}</span>
+                          <span className="font-medium text-ink-800">↳ {p.category.name}</span>
+                        </div>
+                      ) : (
+                        <span className="font-medium text-ink-800">{p.category.name}</span>
+                      )
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                   <td className="p-4">{formatPrice(p.sale_price || p.regular_price)}</td>
                   <td className="p-4 hidden sm:table-cell">{p.stock_quantity}</td>
                   <td className="p-4 hidden lg:table-cell">
@@ -300,6 +323,25 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
+    if (form.homepage_section === 'featured' && product?.homepage_section !== 'featured') {
+      const featuredCount = products.filter((p) => p.homepage_section === 'featured' && p.id !== product?.id).length;
+      if (featuredCount >= 4) {
+        toast.error('Limit reached! Featured Products section cannot have more than 4 products.');
+        setSaving(false);
+        return;
+      }
+    }
+
+    if (form.homepage_section === 'best_seller' && product?.homepage_section !== 'best_seller') {
+      const bestCount = products.filter((p) => p.homepage_section === 'best_seller' && p.id !== product?.id).length;
+      if (bestCount >= 4) {
+        toast.error('Limit reached! Best Sellers section cannot have more than 4 products.');
+        setSaving(false);
+        return;
+      }
+    }
+
     const slug = form.slug || slugify(form.name);
     const payload = {
       ...form,
@@ -364,7 +406,32 @@ function ProductForm({ product, categories, onClose, onSaved }: { product: Produ
                   <label className="text-xs text-ink-400 block mb-1">Category</label>
                   <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="input-field">
                     <option value="">None</option>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {categories
+                      .filter((c) => !c.parent_id)
+                      .map((parent) => {
+                        const subcats = categories.filter((c) => c.parent_id === parent.id);
+                        return (
+                          <optgroup key={parent.id} label={parent.name}>
+                            <option value={parent.id}>{parent.name} (Main Category)</option>
+                            {subcats.map((sub) => (
+                              <option key={sub.id} value={sub.id}>
+                                &nbsp;&nbsp;↳ {sub.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
+                    {categories.filter((c) => c.parent_id && !categories.some((p) => p.id === c.parent_id)).length > 0 && (
+                      <optgroup label="Other Sub-categories">
+                        {categories
+                          .filter((c) => c.parent_id && !categories.some((p) => p.id === c.parent_id))
+                          .map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.name}
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
                   </select>
                 </div>
                 <div><label className="text-xs text-ink-400 block mb-1">Brand</label><input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="input-field" /></div>

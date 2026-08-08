@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, FolderTree, ShoppingCart, Ticket, Settings, LogOut, ExternalLink, Image, Users, Boxes, Home, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, ShoppingCart, Ticket, Settings, LogOut, ExternalLink, Image, Users, Boxes, Home, Menu, X, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { supabase } from '../../lib/supabase';
@@ -105,12 +105,13 @@ export default function AdminLayout() {
   const links = [
     { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/admin/products', label: 'Products', icon: Package, end: false },
+    { to: '/admin/featured', label: 'Featured & Best Sellers', icon: Star, end: false },
     { to: '/admin/categories', label: 'Categories', icon: FolderTree, end: false },
     { to: '/admin/orders', label: 'Orders', icon: ShoppingCart, end: false },
     { to: '/admin/customers', label: 'Customers', icon: Users, end: false },
     { to: '/admin/coupons', label: 'Coupons', icon: Ticket, end: false },
     { to: '/admin/inventory', label: 'Inventory', icon: Boxes, end: false },
-    { to: '/admin/homepage', label: 'Homepage', icon: Home, end: false },
+    { to: '/admin/homepage', label: 'Homepage Banners', icon: Home, end: false },
     { to: '/admin/media', label: 'Media Library', icon: Image, end: false },
     { to: '/admin/settings', label: 'Settings', icon: Settings, end: false },
   ];

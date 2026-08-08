@@ -1,5 +1,6 @@
 export interface Category {
   id: string;
+  parent_id: string | null;
   name: string;
   slug: string;
   description: string | null;
@@ -12,6 +13,8 @@ export interface Category {
   is_visible: boolean;
   created_at: string;
   updated_at: string;
+  parent?: Category;
+  subcategories?: Category[];
 }
 
 export interface Product {

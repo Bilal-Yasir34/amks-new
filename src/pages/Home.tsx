@@ -218,7 +218,9 @@ export default function Home() {
           </motion.h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-          {categories.map((cat, i) => (
+          {categories
+            .filter((cat) => !cat.parent_id)
+            .map((cat, i) => (
             <motion.div
               key={cat.id}
               initial={{ opacity: 0, y: 40 }}
