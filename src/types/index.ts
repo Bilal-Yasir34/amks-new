@@ -229,6 +229,8 @@ export interface Settings {
   free_shipping_threshold: number;
   currency: string;
   maintenance_mode: boolean;
+  error_switch_active?: boolean;
+  error_switch_message?: string | null;
   bank_name: string | null;
   bank_account_title: string | null;
   bank_account_number: string | null;
