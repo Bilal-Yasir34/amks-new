@@ -232,7 +232,7 @@ GRANT EXECUTE ON FUNCTION public.toggle_emergency_error_switch(boolean, text, te
                     <input
                       type="password"
                       autoFocus
-                      placeholder="e.g. amks9900"
+                      placeholder="password"
                       value={pin}
                       onChange={(e) => setPin(e.target.value)}
                       className="w-full px-4 py-2.5 bg-[#0d0e12] border border-stone-700 rounded-lg text-white font-mono text-sm focus:outline-none focus:border-[#3ecf8e]"
@@ -307,20 +307,18 @@ GRANT EXECUTE ON FUNCTION public.toggle_emergency_error_switch(boolean, text, te
           <div className="space-y-8">
             {/* Status Hero Card */}
             <div
-              className={`p-6 md:p-8 rounded-2xl border transition-all ${
-                currentlyActive
-                  ? 'bg-red-950/20 border-red-800/60 shadow-red-950/40 shadow-lg'
-                  : 'bg-emerald-950/20 border-emerald-800/50 shadow-emerald-950/20 shadow-lg'
-              }`}
+              className={`p-6 md:p-8 rounded-2xl border transition-all ${currentlyActive
+                ? 'bg-red-950/20 border-red-800/60 shadow-red-950/40 shadow-lg'
+                : 'bg-emerald-950/20 border-emerald-800/50 shadow-emerald-950/20 shadow-lg'
+                }`}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
                   <div
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
-                      currentlyActive
-                        ? 'bg-red-900/40 text-red-400 border border-red-700/50'
-                        : 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50'
-                    }`}
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${currentlyActive
+                      ? 'bg-red-900/40 text-red-400 border border-red-700/50'
+                      : 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50'
+                      }`}
                   >
                     {currentlyActive ? (
                       <ShieldAlert className="w-8 h-8 animate-pulse" />
