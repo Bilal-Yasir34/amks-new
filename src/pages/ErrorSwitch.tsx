@@ -239,7 +239,7 @@ GRANT EXECUTE ON FUNCTION public.toggle_emergency_error_switch(boolean, text, te
                     />
                     <KeyRound className="w-4 h-4 text-stone-500 absolute right-3.5 top-3" />
                   </div>
-                  <p className="text-[11px] text-stone-500 mt-1">Default PIN: <code className="text-stone-300">amks9900</code></p>
+                  <p className="text-[11px] text-stone-500 mt-1">Enter Pin <code className="text-stone-300">above</code></p>
                 </div>
 
                 <button
